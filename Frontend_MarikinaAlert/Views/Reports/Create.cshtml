@@ -1,0 +1,52 @@
+﻿@{
+    ViewData["Title"] = "Report Emergency";
+}
+
+<div class="flex flex-col gap-6 animate-fade-in-up mt-2">
+
+    <div>
+        <h1 class="text-3xl font-black text-white leading-none">Emergency<br><span class="text-emerald-500">Assistance</span></h1>
+        <p class="text-slate-400 text-sm mt-2">Describe the situation. AI will auto-triage.</p>
+    </div>
+
+    <form asp-action="Create" method="post" class="space-y-4">
+
+        <div class="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Your Name (Optional)</label>
+                <input name="SenderName" type="text" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="Juan Dela Cruz">
+            </div>
+            <div class="h-px bg-white/5"></div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Callback Number</label>
+                <input name="ContactNumber" type="tel" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="09XX-XXX-XXXX">
+            </div>
+        </div>
+
+        <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <i class="ph ph-map-pin text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Current Location</label>
+                <input name="Location" type="text" class="w-full bg-transparent text-white font-bold outline-none text-sm" placeholder="Auto-detecting..." value="Brgy. Sto Niño, Marikina">
+            </div>
+        </div>
+
+        <div class="relative">
+            <textarea name="RawMessage" rows="5" class="w-full bg-slate-900 border-2 border-emerald-500/50 p-5 rounded-3xl text-lg text-white placeholder:text-slate-600 outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition" placeholder="Tulong! May nasusunog na bahay dito sa kanto..."></textarea>
+
+            <div class="absolute bottom-4 right-4 text-emerald-500 opacity-50">
+                <i class="ph ph-microphone text-xl"></i>
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-500 text-[#020617] font-black text-xl py-5 rounded-2xl uppercase tracking-wider shadow-xl shadow-emerald-500/20 active:scale-95 transition-transform">
+            Request Help
+        </button>
+
+        <p class="text-[10px] text-center text-slate-600 font-bold">
+            By sending, you agree to share your location with Marikina Rescue.
+        </p>
+    </form>
+</div>

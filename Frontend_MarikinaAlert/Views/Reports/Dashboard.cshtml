@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "Live Feed";
+}
+
+<div class="space-y-6 mt-2">
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="text-xl font-bold">Live Incidents</h2>
+            <p class="text-xs text-slate-400">Marikina Central Cluster</p>
+        </div>
+        <div class="bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full flex items-center gap-2">
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span class="text-[10px] font-black text-red-500 uppercase">3 Critical</span>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+
+        <div class="block bg-[#0f172a] border-l-4 border-red-500 p-5 rounded-xl">
+            <div class="flex justify-between items-start mb-2">
+                <span class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded">COLLAPSE</span>
+                <span class="text-[10px] text-slate-500 font-mono">2m ago</span>
+            </div>
+            <h3 class="font-bold text-lg leading-tight mb-1">Building Collapse</h3>
+            <p class="text-sm text-slate-400 mb-3 line-clamp-2">"Tulong po, gumuhong pader sa may elementary school..."</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                <i class="ph ph-map-pin text-emerald-500"></i>
+                Brgy. Tumana
+            </div>
+        </div>
+
+        <div class="block bg-[#0f172a] border-l-4 border-yellow-500 p-5 rounded-xl">
+            <div class="flex justify-between items-start mb-2">
+                <span class="bg-yellow-500 text-black text-[10px] font-black px-2 py-0.5 rounded">FIRE</span>
+                <span class="text-[10px] text-slate-500 font-mono">15m ago</span>
+            </div>
+            <h3 class="font-bold text-lg leading-tight mb-1">Residential Fire</h3>
+            <p class="text-sm text-slate-400 mb-3 line-clamp-2">"May usok sa likod ng palengke..."</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
+                <i class="ph ph-map-pin text-emerald-500"></i>
+                Concepcion Uno
+            </div>
+        </div>
+
+    </div>
+</div>

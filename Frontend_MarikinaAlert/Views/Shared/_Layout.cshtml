@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>MarikinAlert</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/@@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --accent: #10b981;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            padding-bottom: 90px; /* Space for bottom nav */
+        }
+        /* Hide scrollbar for clean app look */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen relative">
+
+    <nav class="fixed top-0 w-full bg-[#020617]/90 backdrop-blur-md z-50 border-b border-white/5 px-5 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-black text-slate-900">M</div>
+            <span class="font-bold tracking-tight text-sm">MarikinAlert</span>
+        </div>
+        <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
+    </nav>
+
+    <main class="pt-24 px-4">
+        @RenderBody()
+    </main>
+
+    <div class="fixed bottom-0 w-full bg-[#0f172a] border-t border-white/5 pb-safe px-6 py-3 z-50 flex justify-between items-center">
+        <a asp-controller="Reports" asp-action="Dashboard" class="flex flex-col items-center gap-1 text-slate-500 hover:text-white transition">
+            <i class="ph ph-squares-four text-2xl"></i>
+            <span class="text-[10px] font-bold">Feed</span>
+        </a>
+
+        <a asp-controller="Reports" asp-action="Create" class="relative -top-6 bg-emerald-500 text-slate-900 w-16 h-16 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 border-4 border-[#020617]">
+            <i class="ph ph-siren text-3xl font-bold"></i>
+        </a>
+
+        <a asp-controller="Reports" asp-action="Archive" class="flex flex-col items-center gap-1 text-slate-500 hover:text-white transition">
+            <i class="ph ph-clock-counter-clockwise text-2xl"></i>
+            <span class="text-[10px] font-bold">History</span>
+        </a>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
