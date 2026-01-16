@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http; // Needed for Session
 using Frontend_MarikinaAlert.Services;
-using Frontend_MarikinaAlert.Models; // Ensure this matches your namespace
+using Frontend_MarikinaAlert.Models;
+using System.Linq; // <--- CRITICAL: Needed for filtering (Where)
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Frontend_MarikinaAlert.Controllers
 {
@@ -15,12 +18,11 @@ namespace Frontend_MarikinaAlert.Controllers
         }
 
         // ==========================================
-        // 1. THE LOGIN PAGE (Public)
+        // 1. AUTHENTICATION (Login/Logout)
         // ==========================================
         [HttpGet]
         public IActionResult Login()
         {
-            // If already logged in, go straight to dashboard
             if (HttpContext.Session.GetString("UserRole") == "Admin")
             {
                 return RedirectToAction("Dashboard");
@@ -31,11 +33,9 @@ namespace Frontend_MarikinaAlert.Controllers
         [HttpPost]
         public IActionResult Login(string username, string password)
         {
-            // HARDCODED SECURITY (Simple for Student Projects)
-            // You can change "rescue123" to whatever password you want
-            if (username == "admin" && password == "rescue123")
+            // Use helper method for cleaner logic
+            if (IsValidUser(username, password))
             {
-                // MARK THE USER AS LOGGED IN
                 HttpContext.Session.SetString("UserRole", "Admin");
                 return RedirectToAction("Dashboard");
             }
@@ -43,35 +43,29 @@ namespace Frontend_MarikinaAlert.Controllers
             ViewBag.Error = "Access Denied: Invalid Credentials";
             return View();
         }
-        [HttpPost]
-        public IActionResult UpdateStatus(Guid id, ReportStatus status)
+
+        public IActionResult Logout()
         {
-            // NOTE: In a real app, you would call _triageService.UpdateStatus(id, status).
-            // For this prototype, we are just refreshing the page since we haven't wired 
-            // the Update logic to the database yet.
-
-            // TODO: Ask Student 1 to add "UpdateStatus" to the Repository.
-
-            return RedirectToAction("Dashboard");
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
         }
 
         // ==========================================
-        // 2. THE DASHBOARD (Protected)
+        // 2. THE DASHBOARD (Active Incidents Only)
         // ==========================================
         public async Task<IActionResult> Dashboard()
         {
-            // SECURITY CHECK: STOP! Are you an admin?
-            if (HttpContext.Session.GetString("UserRole") != "Admin")
-            {
-                // If not, kick them back to login
-                return RedirectToAction("Login");
-            }
+            // Security Check
+            if (HttpContext.Session.GetString("UserRole") != "Admin") return RedirectToAction("Login");
 
-            // If yes, load the data
             try
             {
                 var reports = await _triageService.GetAllReportsAsync();
-                return View(reports);
+
+                // FILTER: Only show Active or OnGoing (Hide Resolved)
+                var activeReports = reports.Where(r => r.Status != ReportStatus.Resolved).ToList();
+
+                return View(activeReports);
             }
             catch
             {
@@ -80,12 +74,57 @@ namespace Frontend_MarikinaAlert.Controllers
         }
 
         // ==========================================
-        // 3. LOGOUT
+        // 3. THE HISTORY (Resolved Incidents Only)
         // ==========================================
-        public IActionResult Logout()
+        public async Task<IActionResult> History()
         {
-            HttpContext.Session.Clear(); // Delete the memory
-            return RedirectToAction("Login");
+            // Security Check
+            if (HttpContext.Session.GetString("UserRole") != "Admin") return RedirectToAction("Login");
+
+            try
+            {
+                var reports = await _triageService.GetAllReportsAsync();
+
+                // FILTER: Only show Resolved
+                var historyReports = reports.Where(r => r.Status == ReportStatus.Resolved).ToList();
+
+                return View(historyReports);
+            }
+            catch
+            {
+                return View(new List<DisasterReport>());
+            }
+        }
+
+        // ==========================================
+        // 4. ACTIONS (Update Status/Category)
+        // ==========================================
+        [HttpPost]
+        public IActionResult UpdateStatus(Guid id, ReportStatus status)
+        {
+            // TODO: [BACKEND TEAM] Connect this to _triageService.UpdateStatus(id, status)
+            // For prototype: We just reload the page. Since we don't have a real database 
+            // connected to this specific action yet, the change might not persist 
+            // if you restart the app, but the UI interaction works.
+
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        public IActionResult UpdateCategory(Guid id, ReportCategory category)
+        {
+            // TODO: [BACKEND TEAM] Connect this to _triageService.UpdateCategory(id, category)
+
+            return RedirectToAction("Dashboard");
+        }
+
+        // ==========================================
+        // 5. HELPER METHODS
+        // ==========================================
+        private bool IsValidUser(string username, string password)
+        {
+            // Mock Credentials - easy to replace with Database lookup later
+            return username == "admin" && password == "rescue123";
         }
     }
 }

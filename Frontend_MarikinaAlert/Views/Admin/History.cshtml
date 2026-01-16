@@ -1,0 +1,72 @@
+﻿@using Frontend_MarikinaAlert.Models
+@model IEnumerable<DisasterReport>
+
+@{
+    ViewData["Title"] = "Incident History";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="space-y-6 mt-2">
+    <div class="flex justify-between items-end border-b border-white/10 pb-4">
+        <div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="ph-fill ph-archive text-slate-500"></i> Past Incidents
+            </h2>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-slate-500 text-xs font-mono">
+                Total Resolved: @Model.Count()
+            </div>
+            <a asp-action="Dashboard" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2 transition-colors">
+                <i class="ph-bold ph-arrow-u-up-left"></i> Back to Live Feed
+            </a>
+        </div>
+
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="p-10 text-center border-2 border-dashed border-slate-700 rounded-xl mt-4">
+            <p class="text-slate-500 text-sm">No archived history found.</p>
+        </div>
+    }
+
+    <div class="space-y-4 opacity-75">
+        @foreach (var report in Model.OrderByDescending(x => x.Timestamp))
+        {
+            <div class="bg-slate-800/50 border border-slate-700 p-5 rounded-xl grayscale hover:grayscale-0 transition-all">
+
+                <div class="flex justify-between items-start mb-2">
+                    <span class="bg-emerald-500/20 text-emerald-500 text-[10px] font-black px-2 py-1 rounded uppercase border border-emerald-500/20 flex items-center gap-1">
+                        <i class="ph-fill ph-check-circle"></i> RESOLVED
+                    </span>
+
+                    <span class="text-[10px] text-slate-500 font-mono">
+                        @report.Timestamp.ToString("MMM dd • HH:mm")
+                    </span>
+                </div>
+
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-300 leading-tight">@report.Location</h3>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs text-slate-500 bg-slate-700 px-1.5 rounded">@report.Category</span>
+                            <span class="text-xs text-slate-500">@report.SenderName</span>
+                        </div>
+                        <p class="text-sm text-slate-400 italic mt-2">"@report.RawMessage"</p>
+                    </div>
+
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@report.Id" />
+                        <input type="hidden" name="status" value="Active" />
+
+                        <button type="submit" class="text-[10px] font-bold text-slate-500 hover:text-white underline decoration-slate-600 mt-1">
+                            Re-open Case
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
