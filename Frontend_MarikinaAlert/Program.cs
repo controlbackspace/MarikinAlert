@@ -1,4 +1,20 @@
+using Frontend_MarikinaAlert.Data;
+using Frontend_MarikinaAlert.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. Database Context
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// 2. Repository (Student 1)
+builder.Services.AddScoped<IDisasterRepository, DisasterRepository>();
+
+// 3. Bypass Service (TEMPORARY: Connects Frontend to DB while waiting for Student 2)
+builder.Services.AddScoped<IDisasterTriageService, TemporaryTriageService>();
+
+// ... existing code ...
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
