@@ -1,0 +1,70 @@
+﻿@using Frontend_MarikinaAlert.Models
+@model IEnumerable<DisasterReport>
+@{
+    ViewData["Title"] = "Command Center";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml"; // <--- THIS APPLIES THE NEW UI
+
+    // ... rest of your C# logic ...
+}
+
+@{
+    ViewData["Title"] = "Command Center";
+    // The computer now knows 'Model' is a list of DisasterReports, so this lambda works:
+    var criticalCount = Model.Count(r => r.Priority == ReportPriority.Critical);
+}
+
+<div class="space-y-6 mt-2">
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="text-xl font-bold text-white">Live Incidents</h2>
+            <p class="text-xs text-slate-400">Marikina Central Cluster • Admin View</p>
+        </div>
+
+        @if (criticalCount > 0)
+        {
+            <div class="bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full flex items-center gap-2">
+                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span class="text-[10px] font-black text-red-500 uppercase">@criticalCount Critical</span>
+            </div>
+        }
+    </div>
+
+    <div class="space-y-4">
+
+        @if (!Model.Any())
+        {
+            <div class="p-8 text-center border-2 border-dashed border-slate-700 rounded-xl">
+                <p class="text-slate-500 text-sm">System All Clear. No active incidents.</p>
+            </div>
+        }
+
+        @foreach (var report in Model.OrderByDescending(x => x.Timestamp))
+        {
+            <div class="block bg-[#0f172a] border-l-4 @(report.Priority == ReportPriority.Critical ? "border-red-500" : "border-emerald-500") p-5 rounded-xl">
+
+                <div class="flex justify-between items-start mb-2">
+                    <span class="@(report.Priority == ReportPriority.Critical ? "bg-red-500 text-white" : "bg-emerald-500/20 text-emerald-500") text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                        @report.Priority
+                    </span>
+
+                    <span class="text-[10px] text-slate-500 font-mono">
+                        @report.Timestamp.ToString("HH:mm")
+                    </span>
+                </div>
+
+                <h3 class="font-bold text-lg text-white leading-tight mb-1">@report.Location</h3>
+
+                <p class="text-sm text-slate-400 mb-3 line-clamp-2">"@report.RawMessage"</p>
+
+                <div class="flex items-center gap-4 text-xs font-bold text-slate-500 border-t border-white/5 pt-3 mt-3">
+                    <span class="flex items-center gap-1">
+                        <i class="ph-fill ph-user"></i> @report.SenderName
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i class="ph-fill ph-phone"></i> @report.ContactNumber
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+</div>

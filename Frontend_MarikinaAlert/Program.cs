@@ -8,13 +8,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Repository (Student 1)
+// 2. Repository
 builder.Services.AddScoped<IDisasterRepository, DisasterRepository>();
 
-// 3. Bypass Service (TEMPORARY: Connects Frontend to DB while waiting for Student 2)
+// 3. Service Registration
 builder.Services.AddScoped<IDisasterTriageService, TemporaryTriageService>();
 
-// ... existing code ...
+// 4. ENABLE SESSION & HTTP ACCESSOR
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// <--- ADD THIS NEW LINE HERE! --->
+builder.Services.AddHttpContextAccessor();
+// <--------------------------------->
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -25,7 +36,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -34,10 +44,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// 5. ACTIVATE SESSION
+app.UseSession();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Reports}/{action=Create}/{id?}");
+    pattern: "{controller=Reports}/{action=Index}/{id?}"); // Default to Feed
 
 app.Run();

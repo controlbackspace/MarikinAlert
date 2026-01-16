@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Frontend_MarikinaAlert.Models;
 using Frontend_MarikinaAlert.Services;
-using Frontend_MarikinaAlert.Models;
+using MarikinAlert.Web.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Frontend_MarikinaAlert.Controllers
@@ -14,32 +16,55 @@ namespace Frontend_MarikinaAlert.Controllers
             _triageService = triageService;
         }
 
+        // ==========================================
+        // 1. THE PUBLIC FEED (Default Page)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            // Everyone can see this. No login required.
+            try
+            {
+                var reports = await _triageService.GetAllReportsAsync();
+                return View(reports);
+            }
+            catch
+            {
+                return View(new List<DisasterReport>());
+            }
+        }
+
+        // ==========================================
+        // 2. THE REPORT FORM
+        // ==========================================
         [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View(new SubmitReportViewModel());
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        // CHANGE: Added 'string contactNumber' to match the Form Input Name
-        public async Task<IActionResult> Create(string rawMessage, string senderName, string contactNumber, string location)
+        public async Task<IActionResult> Create(SubmitReportViewModel model)
         {
-            if (!string.IsNullOrEmpty(rawMessage))
+            if (!ModelState.IsValid)
             {
-                // CHANGE: Pass 'contactNumber' to the service
-                await _triageService.TriageAndAnalyzeAsync(rawMessage, senderName, contactNumber, location);
-                return RedirectToAction("Dashboard");
+                return View(model);
             }
 
-            return View();
+            await _triageService.TriageAndAnalyzeAsync(
+                model.RawMessage,
+                model.SenderName,
+                model.Location,
+                model.ContactNumber
+            );
+
+            // FIX: Redirect back to the Public Feed, NOT the Admin Login
+            return RedirectToAction("Index");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Dashboard()
+        public IActionResult Archive()
         {
-            var reports = await _triageService.GetAllReportsAsync();
-            return View(reports);
+            return View();
         }
     }
 }

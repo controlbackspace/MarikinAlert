@@ -1,0 +1,52 @@
+﻿@using Frontend_MarikinaAlert.Models
+@model IEnumerable<DisasterReport>
+
+@{
+    ViewData["Title"] = "Public Feed";
+}
+
+<div class="space-y-6 mt-2">
+
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-black text-white">Marikina Alert</h1>
+            <p class="text-xs text-slate-400">Live Public Incident Feed</p>
+        </div>
+        <a asp-action="Create" class="bg-emerald-500 hover:bg-emerald-400 text-[#0f172a] font-bold py-2 px-4 rounded-xl shadow-lg shadow-emerald-500/20 text-sm flex items-center gap-2 transition-transform active:scale-95">
+            <i class="ph-fill ph-megaphone"></i> REPORT EMERGENCY
+        </a>
+    </div>
+
+    <div class="space-y-4">
+        @if (!Model.Any())
+        {
+            <div class="p-10 text-center border-2 border-dashed border-slate-700 rounded-2xl">
+                <i class="ph ph-check-circle text-4xl text-emerald-500 mb-2"></i>
+                <p class="text-slate-500 font-bold">All Clear</p>
+                <p class="text-xs text-slate-600">No active incidents reported in your area.</p>
+            </div>
+        }
+
+        @foreach (var report in Model.OrderByDescending(x => x.Timestamp))
+        {
+            <div class="bg-slate-800/50 border border-white/5 p-5 rounded-2xl relative overflow-hidden">
+
+                <div class="absolute left-0 top-0 bottom-0 w-1 @(report.Priority == ReportPriority.Critical ? "bg-red-500" : "bg-emerald-500")"></div>
+
+                <div class="pl-3">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider @(report.Priority == ReportPriority.Critical ? "bg-red-500/20 text-red-400" : "bg-emerald-500/10 text-emerald-400")">
+                            @report.Priority Priority
+                        </span>
+                        <span class="text-[10px] text-slate-500 font-mono">
+                            @report.Timestamp.ToString("h:mm tt")
+                        </span>
+                    </div>
+
+                    <h3 class="font-bold text-lg text-white leading-tight">@report.Location</h3>
+                    <p class="text-slate-400 text-sm mt-1 line-clamp-2">"@report.RawMessage"</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

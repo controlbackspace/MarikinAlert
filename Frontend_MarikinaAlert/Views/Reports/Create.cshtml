@@ -1,25 +1,27 @@
-﻿@{
+﻿@model MarikinAlert.Web.Models.SubmitReportViewModel
+@{
     ViewData["Title"] = "Report Emergency";
 }
 
 <div class="flex flex-col gap-6 animate-fade-in-up mt-2">
-
+    
     <div>
         <h1 class="text-3xl font-black text-white leading-none">Emergency<br><span class="text-emerald-500">Assistance</span></h1>
         <p class="text-slate-400 text-sm mt-2">Describe the situation. AI will auto-triage.</p>
     </div>
 
     <form asp-action="Create" method="post" class="space-y-4">
-
+        
         <div class="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
             <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase">Your Name (Optional)</label>
-                <input name="SenderName" type="text" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="Juan Dela Cruz">
+                <input asp-for="SenderName" type="text" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="Juan Dela Cruz">
             </div>
             <div class="h-px bg-white/5"></div>
             <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase">Callback Number</label>
-                <input name="ContactNumber" type="tel" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="09XX-XXX-XXXX">
+                <input asp-for="ContactNumber" type="tel" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="09XX-XXX-XXXX">
+                <span asp-validation-for="ContactNumber" class="text-red-500 text-[10px] font-bold"></span>
             </div>
         </div>
 
@@ -28,14 +30,16 @@
                 <i class="ph ph-map-pin text-xl"></i>
             </div>
             <div class="flex-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Current Location</label>
-                <input name="Location" type="text" class="w-full bg-transparent text-white font-bold outline-none text-sm" placeholder="Auto-detecting..." value="Brgy. Sto Niño, Marikina">
+                 <label class="text-[10px] font-bold text-slate-500 uppercase">Current Location</label>
+                 <input asp-for="Location" type="text" class="w-full bg-transparent text-white font-bold outline-none text-sm" placeholder="Auto-detecting..." value="Brgy. Sto Niño, Marikina">
+                 <span asp-validation-for="Location" class="text-red-500 text-[10px] font-bold"></span>
             </div>
         </div>
 
         <div class="relative">
-            <textarea name="RawMessage" rows="5" class="w-full bg-slate-900 border-2 border-emerald-500/50 p-5 rounded-3xl text-lg text-white placeholder:text-slate-600 outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition" placeholder="Tulong! May nasusunog na bahay dito sa kanto..."></textarea>
-
+            <textarea asp-for="RawMessage" rows="5" class="w-full bg-slate-900 border-2 border-emerald-500/50 p-5 rounded-3xl text-lg text-white placeholder:text-slate-600 outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition" placeholder="Tulong! May nasusunog na bahay dito sa kanto..."></textarea>
+            <span asp-validation-for="RawMessage" class="text-red-500 text-[10px] font-bold"></span>
+            
             <div class="absolute bottom-4 right-4 text-emerald-500 opacity-50">
                 <i class="ph ph-microphone text-xl"></i>
             </div>
