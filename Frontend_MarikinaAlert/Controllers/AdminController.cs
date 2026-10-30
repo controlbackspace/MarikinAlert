@@ -13,7 +13,7 @@ namespace Frontend_MarikinaAlert.Controllers
 {
     // Dispatcher / Incident Triage Officer pages.
     [Authorize]
-    public class AdminController(IReportRepository reports, IConfiguration config) : Controller
+    public class AdminController(IReportRepository reports, IDisasterTriageService triage, IConfiguration config) : Controller
     {
         // ---------- Login ----------
 
@@ -103,6 +103,46 @@ namespace Frontend_MarikinaAlert.Controllers
             };
         }
 
+        // ---------- New report (calls, radio, walk-ins) ----------
+
+        [HttpGet]
+        public IActionResult NewReport() => View(new LogReportViewModel { Source = ReportSource.PhoneCall });
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> NewReport(LogReportViewModel model)
+        {
+            model.Barangay = model.Barangay?.Normalize(System.Text.NormalizationForm.FormC);
+            if (model.Barangay is not null && !Marikina.Barangays.Contains(model.Barangay))
+                ModelState.AddModelError(nameof(model.Barangay), "Choose a barangay from the list.");
+            if (model.Source == ReportSource.App)
+                ModelState.AddModelError(nameof(model.Source), "Choose how this report came in.");
+
+            if (!ModelState.IsValid) return View(model);
+
+            var result = triage.Triage(model.RawMessage!, model.SelectedCategory);
+
+            var report = await reports.AddAsync(new DisasterReport
+            {
+                SenderName = Clean(model.SenderName),
+                ContactNumber = Clean(model.ContactNumber),
+                Barangay = model.Barangay!,
+                Landmark = Clean(model.Landmark),
+                RawMessage = model.RawMessage!.Trim(),
+                Category = result.Category,
+                Priority = result.Priority,
+                MatchedKeywords = result.MatchedKeywords.Count > 0 ? string.Join(", ", result.MatchedKeywords) : null,
+                Status = ReportStatus.Active,
+                Source = model.Source!.Value,
+                LoggedBy = User.Identity?.Name,
+                TrackingCode = await TrackingCodes.NewAsync(reports)
+            });
+
+            // Shown once on the dashboard so the dispatcher can read the tracking code to the caller.
+            TempData["LoggedRef"] = $"MA-{report.Id:D5}";
+            TempData["LoggedCode"] = report.TrackingCodeDisplay;
+            return RedirectToAction(nameof(Dashboard));
+        }
+
         // ---------- Actions ----------
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -154,6 +194,8 @@ namespace Frontend_MarikinaAlert.Controllers
             Status = status,
             Search = q
         });
+
+        private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         private static bool FixedTimeEquals(string a, string b) =>
             CryptographicOperations.FixedTimeEquals(

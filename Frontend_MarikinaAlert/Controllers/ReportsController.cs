@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using Frontend_MarikinaAlert.Localization;
+﻿using Frontend_MarikinaAlert.Localization;
 using Frontend_MarikinaAlert.Models;
 using Frontend_MarikinaAlert.Repositories;
 using Frontend_MarikinaAlert.Services;
@@ -12,9 +11,6 @@ namespace Frontend_MarikinaAlert.Controllers
     // Public, resident-facing pages.
     public class ReportsController(IReportRepository reports, IDisasterTriageService triage, IStringLocalizer<Translations> T) : Controller
     {
-        // No 0/O or 1/I/L so codes are easy to read aloud and type on a phone.
-        private const string TrackingAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
         [HttpGet]
         public IActionResult Create() => View(new CreateReportViewModel());
 
@@ -42,7 +38,7 @@ namespace Frontend_MarikinaAlert.Controllers
                 Priority = result.Priority,
                 MatchedKeywords = result.MatchedKeywords.Count > 0 ? string.Join(", ", result.MatchedKeywords) : null,
                 Status = ReportStatus.Active,
-                TrackingCode = await NewTrackingCodeAsync()
+                TrackingCode = await TrackingCodes.NewAsync(reports)
             });
 
             // Post/Redirect/Get so refreshing the confirmation page doesn't send a duplicate report.
@@ -67,7 +63,7 @@ namespace Frontend_MarikinaAlert.Controllers
         public async Task<IActionResult> Status(string? code)
         {
             var model = new ReportStatusViewModel { Code = code };
-            var normalized = NormalizeCode(code);
+            var normalized = TrackingCodes.Normalize(code);
 
             if (normalized is not null)
             {
@@ -93,23 +89,6 @@ namespace Frontend_MarikinaAlert.Controllers
                 new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true, SameSite = SameSiteMode.Lax });
 
             return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl!) : RedirectToAction(nameof(Create));
-        }
-
-        private async Task<string> NewTrackingCodeAsync()
-        {
-            // 31^8 possible codes; a collision is practically impossible, but check anyway.
-            while (true)
-            {
-                var code = RandomNumberGenerator.GetString(TrackingAlphabet, 8);
-                if (await reports.GetByTrackingCodeAsync(code) is null) return code;
-            }
-        }
-
-        private static string? NormalizeCode(string? code)
-        {
-            if (string.IsNullOrWhiteSpace(code)) return null;
-            var cleaned = new string(code.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
-            return cleaned.Length == 8 && cleaned.All(TrackingAlphabet.Contains) ? cleaned : null;
         }
 
         private const string SubmittedKey = "SubmittedReportId";

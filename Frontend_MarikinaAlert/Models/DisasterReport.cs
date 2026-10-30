@@ -28,6 +28,15 @@ namespace Frontend_MarikinaAlert.Models
         Dismissed = 4   // archived as noise / false alarm, moves to History
     }
 
+    // How the report reached the system: a resident's phone, or a dispatcher typing in a call.
+    public enum ReportSource
+    {
+        App = 0,
+        PhoneCall = 1,
+        Radio = 2,
+        WalkIn = 3
+    }
+
     public class DisasterReport
     {
         public int Id { get; set; }
@@ -63,6 +72,20 @@ namespace Frontend_MarikinaAlert.Models
         // Random code the resident uses to check their report's status. Ids are sequential and guessable; this isn't.
         [MaxLength(12)]
         public string? TrackingCode { get; set; }
+
+        public ReportSource Source { get; set; }
+
+        // Dispatcher who typed the report in; null when a resident sent it.
+        [MaxLength(100)]
+        public string? LoggedBy { get; set; }
+
+        public string SourceText => Source switch
+        {
+            ReportSource.PhoneCall => "phone call",
+            ReportSource.Radio => "radio",
+            ReportSource.WalkIn => "walk-in",
+            _ => "app"
+        };
 
         public string? TrackingCodeDisplay => TrackingCode is { Length: 8 } c ? $"{c[..4]}-{c[4..]}" : TrackingCode;
 

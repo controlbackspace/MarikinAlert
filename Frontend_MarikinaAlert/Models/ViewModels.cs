@@ -31,6 +31,13 @@ namespace Frontend_MarikinaAlert.Models
         public ReportCategory? SelectedCategory { get; set; }
     }
 
+    // Dispatcher's "New report" form: the resident form plus how the report came in.
+    public class LogReportViewModel : CreateReportViewModel
+    {
+        [Required(ErrorMessage = "Choose how this report came in.")]
+        public ReportSource? Source { get; set; }
+    }
+
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Enter your username.")]
