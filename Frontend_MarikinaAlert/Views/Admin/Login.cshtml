@@ -1,0 +1,69 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Dispatcher Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Dispatcher Login · MarikinAlert</title>
+    <partial name="_Assets" />
+</head>
+<body class="font-sans antialiased min-h-screen bg-grid grid place-items-center px-4 py-10">
+
+    <div class="w-full max-w-sm animate-fade-in-up">
+        <div class="text-center mb-8">
+            <span class="w-14 h-14 mx-auto rounded-2xl bg-red-500/15 border border-red-500/40 grid place-items-center">
+                <i class="ph-fill ph-siren text-3xl text-red-400" aria-hidden="true"></i>
+            </span>
+            <h1 class="mt-4 font-extrabold tracking-[.18em]">RESCUE COMMAND</h1>
+            <p class="text-sm text-slate-400 mt-1">Sign in to the dispatcher dashboard</p>
+        </div>
+
+        <form asp-action="Login" method="post" class="rounded-2xl border border-white/10 bg-panel/90 p-6 space-y-5 shadow-2xl" novalidate>
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div asp-validation-summary="ModelOnly" class="rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-sm font-semibold px-3 py-2 empty:hidden [&_ul]:list-none"></div>
+
+            <div>
+                <label asp-for="Username" class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5"></label>
+                <input asp-for="Username" autocomplete="username" autofocus
+                       class="w-full rounded-xl bg-ink border border-white/10 px-4 py-3 font-semibold outline-none focus:border-emerald-400 transition" />
+                <span asp-validation-for="Username"></span>
+            </div>
+
+            <div>
+                <label asp-for="Password" class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5"></label>
+                <div class="relative">
+                    <input asp-for="Password" autocomplete="current-password"
+                           class="w-full rounded-xl bg-ink border border-white/10 pl-4 pr-12 py-3 font-semibold outline-none focus:border-emerald-400 transition" />
+                    <button type="button" id="toggle-password" class="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 grid place-items-center text-slate-400 hover:text-white" aria-label="Show password" aria-pressed="false">
+                        <i class="ph ph-eye text-xl" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Password"></span>
+            </div>
+
+            <button type="submit" class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-400 text-ink font-extrabold py-3.5 transition">Sign in</button>
+        </form>
+
+        <a asp-controller="Reports" asp-action="Create" class="mt-6 flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-white">
+            <i class="ph ph-arrow-left" aria-hidden="true"></i> Back to the resident report form
+        </a>
+    </div>
+
+    <script>
+        document.getElementById('toggle-password').addEventListener('click', function () {
+            const input = document.getElementById('Password');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            this.setAttribute('aria-pressed', show);
+            this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            this.querySelector('i').className = 'ph ' + (show ? 'ph-eye-slash' : 'ph-eye') + ' text-xl';
+        });
+    </script>
+</body>
+</html>

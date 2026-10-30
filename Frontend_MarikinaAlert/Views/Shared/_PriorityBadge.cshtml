@@ -1,0 +1,23 @@
+@model DisasterReport
+@{
+    var (priorityClass, priorityLabel) = Model.Priority switch
+    {
+        ReportPriority.Critical => ("bg-red-500 text-white", "Critical"),
+        ReportPriority.High => ("bg-amber-400 text-ink", "High"),
+        _ => ("bg-slate-600 text-white", "Normal")
+    };
+    var (categoryIcon, categoryLabel) = Model.Category switch
+    {
+        ReportCategory.Fire => ("ph-fire", "Fire"),
+        ReportCategory.Collapse => ("ph-warning", "Collapse"),
+        ReportCategory.Medical => ("ph-first-aid", "Medical"),
+        ReportCategory.Flood => ("ph-waves", "Flood"),
+        _ => ("ph-question", "Unclassified")
+    };
+}
+<span class="inline-flex items-center gap-1.5 flex-wrap">
+    <span class="@priorityClass text-[11px] font-extrabold uppercase tracking-wide px-2 py-1 rounded-md">@priorityLabel</span>
+    <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-md border border-white/15 text-slate-200">
+        <i class="ph @categoryIcon text-sm" aria-hidden="true"></i>@categoryLabel
+    </span>
+</span>

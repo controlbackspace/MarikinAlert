@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36811.4 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frontend_MarikinaAlert", "Frontend_MarikinaAlert\Frontend_MarikinaAlert.csproj", "{74D97A77-618E-4B9E-9DFB-27279135DC74}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarikinAlert.Tests", "MarikinAlert.Tests\MarikinAlert.Tests.csproj", "{800561D1-0B80-40F5-9C1C-055F36B223CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{74D97A77-618E-4B9E-9DFB-27279135DC74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74D97A77-618E-4B9E-9DFB-27279135DC74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74D97A77-618E-4B9E-9DFB-27279135DC74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{800561D1-0B80-40F5-9C1C-055F36B223CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{800561D1-0B80-40F5-9C1C-055F36B223CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{800561D1-0B80-40F5-9C1C-055F36B223CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{800561D1-0B80-40F5-9C1C-055F36B223CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,55 @@
+@model DisasterReport
+@{
+    ViewData["Title"] = "Report Received";
+
+    var tips = Model.Category switch
+    {
+        ReportCategory.Fire => new[] { "Get everyone out and stay out. Don't go back for belongings.", "Stay low if there is smoke.", "Don't use elevators." },
+        ReportCategory.Flood => new[] { "Move to higher ground or an upper floor.", "Turn off the main power switch if it's safe.", "Don't walk or drive through moving water." },
+        ReportCategory.Collapse => new[] { "If trapped, cover your mouth and stay still.", "Tap on a pipe or wall so rescuers can hear you.", "Shout only as a last resort to save your strength." },
+        ReportCategory.Medical => new[] { "Stay with the person and keep them still.", "Press firmly on any bleeding with a clean cloth.", "Don't give food or water to someone who is unconscious." },
+        _ => new[] { "Move to a safe place if you can.", "Keep your phone on and nearby.", "Send another report if things get worse." }
+    };
+}
+
+<div class="animate-fade-in-up text-center pt-4">
+    <div class="w-20 h-20 mx-auto rounded-full bg-emerald-500/15 border border-emerald-400/40 grid place-items-center">
+        <i class="ph-fill ph-check-circle text-5xl text-emerald-400" aria-hidden="true"></i>
+    </div>
+    <h1 class="text-3xl font-extrabold mt-5">Report received</h1>
+    <p class="text-slate-300 mt-2">Dispatchers can see your report now and are sorting it by urgency.</p>
+
+    <dl class="mt-6 rounded-2xl border border-white/10 bg-white/[.04] divide-y divide-white/10 text-left">
+        <div class="flex justify-between items-center p-4">
+            <dt class="text-sm text-slate-400">Reference no.</dt>
+            <dd class="font-mono font-bold text-lg">MA-@Model.Id.ToString("D5")</dd>
+        </div>
+        <div class="flex justify-between items-center p-4">
+            <dt class="text-sm text-slate-400">Location</dt>
+            <dd class="font-semibold text-right">@Model.LocationText</dd>
+        </div>
+        <div class="flex justify-between items-center p-4">
+            <dt class="text-sm text-slate-400">Sorted as</dt>
+            <dd><partial name="_PriorityBadge" model="Model" /></dd>
+        </div>
+    </dl>
+
+    @if (Model.ContactNumber is not null)
+    {
+        <p class="mt-4 text-sm text-slate-300"><i class="ph ph-phone text-emerald-400" aria-hidden="true"></i> Keep your phone on. A dispatcher may call <strong class="text-white">@Model.ContactNumber</strong>.</p>
+    }
+
+    <section class="mt-8 text-left rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
+        <h2 class="font-bold text-amber-200 flex items-center gap-2"><i class="ph-fill ph-shield-warning text-xl" aria-hidden="true"></i> While you wait</h2>
+        <ul class="mt-3 space-y-2 text-slate-100">
+            @foreach (var tip in tips)
+            {
+                <li class="flex gap-2"><i class="ph ph-check text-amber-300 mt-1 shrink-0" aria-hidden="true"></i>@tip</li>
+            }
+        </ul>
+    </section>
+
+    <a asp-action="Create" class="mt-8 inline-flex items-center justify-center gap-2 w-full rounded-2xl border border-white/15 py-4 font-bold hover:bg-white/5 transition">
+        <i class="ph ph-plus-circle text-xl" aria-hidden="true"></i> Send another report
+    </a>
+</div>

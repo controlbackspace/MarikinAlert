@@ -1,52 +1,133 @@
-﻿@{
-    ViewData["Title"] = "Report Emergency";
+﻿@model CreateReportViewModel
+@{
+    ViewData["Title"] = "Report an Emergency";
+
+    var quickPicks = new[]
+    {
+        (Value: ReportCategory.Fire, Label: "Sunog", Sub: "Fire", Icon: "ph-fire"),
+        (Value: ReportCategory.Flood, Label: "Baha", Sub: "Flood", Icon: "ph-waves"),
+        (Value: ReportCategory.Medical, Label: "Medical", Sub: "Injury / sick", Icon: "ph-first-aid"),
+        (Value: ReportCategory.Collapse, Label: "Gumuho / Naipit", Sub: "Collapse / trapped", Icon: "ph-warning")
+    };
 }
 
-<div class="flex flex-col gap-6 animate-fade-in-up mt-2">
+<div class="animate-fade-in-up">
+    <h1 class="text-3xl sm:text-4xl font-extrabold leading-[1.05] tracking-tight">
+        Emergency<br><span class="text-emerald-400">Assistance</span>
+    </h1>
+    <p class="text-slate-300 mt-3">Tell us what's happening. Reports are sorted automatically so the most urgent get help first.</p>
 
-    <div>
-        <h1 class="text-3xl font-black text-white leading-none">Emergency<br><span class="text-emerald-500">Assistance</span></h1>
-        <p class="text-slate-400 text-sm mt-2">Describe the situation. AI will auto-triage.</p>
-    </div>
+    <form asp-action="Create" method="post" id="report-form" class="mt-8 space-y-8" novalidate>
 
-    <form asp-action="Create" method="post" class="space-y-4">
+        <div asp-validation-summary="ModelOnly" class="text-red-300 text-sm font-semibold"></div>
 
-        <div class="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+        @* 1. What *@
+        <fieldset class="space-y-3">
+            <legend class="flex items-center gap-2 text-sm font-bold text-slate-200 mb-3">
+                <span class="w-6 h-6 rounded-full bg-emerald-500 text-ink grid place-items-center text-xs font-extrabold">1</span>
+                What is happening?
+            </legend>
+
+            <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Type of emergency (optional)">
+                @foreach (var pick in quickPicks)
+                {
+                    <label class="relative cursor-pointer">
+                        <input type="radio" asp-for="SelectedCategory" value="@pick.Value" class="peer sr-only" />
+                        <span class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] px-3.5 py-3 transition
+                                     peer-checked:border-emerald-400 peer-checked:bg-emerald-500/15 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-400 hover:bg-white/[.08]">
+                            <i class="ph @pick.Icon text-2xl text-emerald-400" aria-hidden="true"></i>
+                            <span class="leading-tight">
+                                <span class="block font-bold text-sm">@pick.Label</span>
+                                <span class="block text-xs text-slate-400">@pick.Sub</span>
+                            </span>
+                        </span>
+                    </label>
+                }
+            </div>
+
             <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Your Name (Optional)</label>
-                <input name="SenderName" type="text" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="Juan Dela Cruz">
+                <label asp-for="RawMessage" class="sr-only"></label>
+                <textarea asp-for="RawMessage" rows="5" maxlength="1000" aria-describedby="msg-help"
+                          class="w-full bg-panel border-2 border-emerald-500/40 p-4 rounded-2xl text-base sm:text-lg text-white placeholder:text-slate-500 outline-none focus:border-emerald-400 focus:shadow-[0_0_24px_rgba(16,185,129,0.2)] transition resize-y"
+                          placeholder="Hal. Tulong! May nasusunog na bahay dito sa kanto, may naipit sa loob..."></textarea>
+                <div class="flex justify-between gap-4 mt-2 text-xs text-slate-400">
+                    <p id="msg-help">Tagalog or English is fine. Say if someone is <strong class="text-slate-200">trapped, injured, or unconscious</strong>.</p>
+                    <span id="msg-count" class="tabular-nums shrink-0" aria-live="polite">0/1000</span>
+                </div>
+                <span asp-validation-for="RawMessage"></span>
             </div>
-            <div class="h-px bg-white/5"></div>
-            <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Callback Number</label>
-                <input name="ContactNumber" type="tel" class="w-full bg-transparent text-white font-bold outline-none placeholder:text-slate-600" placeholder="09XX-XXX-XXXX">
+        </fieldset>
+
+        @* 2. Where *@
+        <fieldset class="space-y-3">
+            <legend class="flex items-center gap-2 text-sm font-bold text-slate-200 mb-3">
+                <span class="w-6 h-6 rounded-full bg-emerald-500 text-ink grid place-items-center text-xs font-extrabold">2</span>
+                Where are you?
+            </legend>
+
+            <div class="rounded-2xl border border-white/10 bg-white/[.04] divide-y divide-white/10">
+                <div class="p-4">
+                    <label asp-for="Barangay" class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">Barangay</label>
+                    <div class="relative">
+                        <select asp-for="Barangay" class="w-full appearance-none bg-transparent text-white font-semibold text-base outline-none pr-8 py-1 cursor-pointer">
+                            <option value="" class="bg-panel">Select your barangay</option>
+                            @foreach (var b in Marikina.Barangays)
+                            {
+                                <option value="@b" class="bg-panel">@b</option>
+                            }
+                        </select>
+                        <i class="ph ph-caret-down absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true"></i>
+                    </div>
+                    <span asp-validation-for="Barangay"></span>
+                </div>
+                <div class="p-4">
+                    <label asp-for="Landmark" class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">Street / landmark <span class="normal-case font-semibold text-slate-500">(helps rescuers find you)</span></label>
+                    <input asp-for="Landmark" autocomplete="street-address"
+                           class="w-full bg-transparent text-white font-semibold text-base outline-none placeholder:text-slate-500 py-1"
+                           placeholder="Hal. Tapat ng Mercury Drug, J.P. Rizal St." />
+                    <span asp-validation-for="Landmark"></span>
+                </div>
             </div>
+        </fieldset>
+
+        @* 3. Who *@
+        <fieldset class="space-y-3">
+            <legend class="flex items-center gap-2 text-sm font-bold text-slate-200 mb-3">
+                <span class="w-6 h-6 rounded-full bg-emerald-500 text-ink grid place-items-center text-xs font-extrabold">3</span>
+                How can we reach you? <span class="font-semibold text-slate-400">(optional)</span>
+            </legend>
+
+            <div class="rounded-2xl border border-white/10 bg-white/[.04] divide-y divide-white/10">
+                <div class="p-4">
+                    <label asp-for="SenderName" class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">Your name</label>
+                    <input asp-for="SenderName" autocomplete="name"
+                           class="w-full bg-transparent text-white font-semibold text-base outline-none placeholder:text-slate-500 py-1"
+                           placeholder="Juan Dela Cruz" />
+                </div>
+                <div class="p-4">
+                    <label asp-for="ContactNumber" class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">Callback number</label>
+                    <input asp-for="ContactNumber" type="tel" inputmode="tel" autocomplete="tel"
+                           class="w-full bg-transparent text-white font-semibold text-base outline-none placeholder:text-slate-500 py-1"
+                           placeholder="0917 123 4567" />
+                    <span asp-validation-for="ContactNumber"></span>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="space-y-3">
+            <button type="submit" id="submit-btn"
+                    class="w-full flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-400 text-ink font-extrabold text-lg py-5 rounded-2xl uppercase tracking-wider shadow-xl shadow-emerald-500/20 active:scale-[.98] transition disabled:opacity-70 disabled:cursor-wait">
+                <i class="ph-fill ph-siren text-2xl" aria-hidden="true"></i>
+                <span>Request Help</span>
+            </button>
+            <p class="text-xs text-center text-slate-400">
+                Your report goes straight to Marikina dispatchers over the local network. No internet needed.
+            </p>
         </div>
-
-        <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-                <i class="ph ph-map-pin text-xl"></i>
-            </div>
-            <div class="flex-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Current Location</label>
-                <input name="Location" type="text" class="w-full bg-transparent text-white font-bold outline-none text-sm" placeholder="Auto-detecting..." value="Brgy. Sto Niño, Marikina">
-            </div>
-        </div>
-
-        <div class="relative">
-            <textarea name="RawMessage" rows="5" class="w-full bg-slate-900 border-2 border-emerald-500/50 p-5 rounded-3xl text-lg text-white placeholder:text-slate-600 outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition" placeholder="Tulong! May nasusunog na bahay dito sa kanto..."></textarea>
-
-            <div class="absolute bottom-4 right-4 text-emerald-500 opacity-50">
-                <i class="ph ph-microphone text-xl"></i>
-            </div>
-        </div>
-
-        <button type="submit" class="w-full bg-emerald-500 text-[#020617] font-black text-xl py-5 rounded-2xl uppercase tracking-wider shadow-xl shadow-emerald-500/20 active:scale-95 transition-transform">
-            Request Help
-        </button>
-
-        <p class="text-[10px] text-center text-slate-600 font-bold">
-            By sending, you agree to share your location with Marikina Rescue.
-        </p>
     </form>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/site.js" asp-append-version="true"></script>
+}
