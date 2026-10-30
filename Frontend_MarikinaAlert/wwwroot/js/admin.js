@@ -5,7 +5,6 @@
     const feed = document.getElementById('feed');
     const filters = document.getElementById('filters');
     const liveStatus = document.getElementById('live-status');
-    const livePing = document.getElementById('live-ping');
     const liveDot = document.getElementById('live-dot');
     const toastEl = document.getElementById('toast');
     const baseTitle = document.title;
@@ -22,7 +21,8 @@
 
     function toast(message, isError) {
         toastEl.textContent = message;
-        toastEl.classList.toggle('border-red-500/50', !!isError);
+        toastEl.classList.toggle('bg-danger', !!isError);
+        toastEl.classList.toggle('bg-ink', !isError);
         toastEl.classList.remove('opacity-0');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => toastEl.classList.add('opacity-0'), 3000);
@@ -39,9 +39,8 @@
         liveStatus.textContent = online
             ? 'Live · updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })
             : 'Connection lost · retrying…';
-        liveDot.classList.toggle('bg-emerald-400', online);
-        liveDot.classList.toggle('bg-red-500', !online);
-        livePing.classList.toggle('hidden', !online);
+        liveDot.classList.toggle('bg-success', online);
+        liveDot.classList.toggle('bg-danger', !online);
     }
 
     function beep() {
@@ -122,8 +121,9 @@
         soundOn = !soundOn;
         this.setAttribute('aria-pressed', soundOn);
         this.querySelector('i').className = 'ph text-base ' + (soundOn ? 'ph-speaker-high' : 'ph-speaker-slash');
-        this.querySelector('span').textContent = soundOn ? 'Sound on' : 'Sound off';
-        this.classList.toggle('text-emerald-300', soundOn);
+        this.querySelector('span').textContent = soundOn ? 'Sound alerts on' : 'Sound alerts off';
+        this.classList.toggle('text-primary', soundOn);
+        this.classList.toggle('border-primary', soundOn);
         if (soundOn) beep(); // also unlocks audio, browsers require a user gesture
     });
 

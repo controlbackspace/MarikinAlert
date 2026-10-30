@@ -1,8 +1,8 @@
 @{
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     string NavClass(string name) => action == name
-        ? "text-white bg-white/10"
-        : "text-slate-400 hover:text-white hover:bg-white/5";
+        ? "text-white border-accent"
+        : "text-white/70 border-transparent hover:text-white";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -10,42 +10,29 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>@(ViewData["Title"] is string t ? $"{t} · Rescue Command" : "Rescue Command")</title>
+    <title>@(ViewData["Title"] is string t ? $"{t} · MarikinAlert Dispatch" : "MarikinAlert Dispatch")</title>
     <partial name="_Assets" />
 </head>
-<body class="font-sans antialiased min-h-screen bg-grid">
+<body class="font-sans antialiased min-h-[100dvh] bg-surface">
 
-    <header class="sticky top-0 z-40 bg-panel/95 backdrop-blur border-b border-white/10">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-3">
-            <a asp-controller="Admin" asp-action="Dashboard" class="flex items-center gap-3 mr-auto min-w-0">
-                <span class="w-9 h-9 shrink-0 rounded-lg bg-red-500/15 border border-red-500/40 grid place-items-center">
-                    <i class="ph-fill ph-siren text-xl text-red-400" aria-hidden="true"></i>
-                </span>
-                <span class="leading-tight min-w-0">
-                    <span class="block font-extrabold tracking-[.18em] text-sm">RESCUE COMMAND</span>
-                    <span class="hidden sm:block text-[11px] text-slate-400 uppercase tracking-wider">MarikinAlert dispatcher</span>
-                </span>
+    <header class="sticky top-0 z-30 bg-header text-white">
+        <div class="max-w-6xl mx-auto px-4 h-14 flex items-stretch gap-6">
+            <a asp-controller="Admin" asp-action="Dashboard" class="flex items-center gap-2.5 mr-auto">
+                <svg viewBox="0 0 32 32" class="w-7 h-7" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#fff"/><path d="M8 23V9l8 8 8-8v14" fill="none" stroke="#0032a0" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/><rect x="6" y="26" width="20" height="2.5" rx="1" fill="#F77F00"/></svg>
+                <span class="font-bold tracking-tight">MarikinAlert <span class="font-normal text-white/70">Dispatch</span></span>
             </a>
 
-            <nav class="flex items-center gap-1" aria-label="Admin">
-                <a asp-controller="Admin" asp-action="Dashboard" class="@NavClass("Dashboard") flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition" aria-current="@(action == "Dashboard" ? "page" : null)">
-                    <i class="ph ph-broadcast text-lg" aria-hidden="true"></i><span class="hidden sm:inline">Live</span>
-                </a>
-                <a asp-controller="Admin" asp-action="History" class="@NavClass("History") flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition" aria-current="@(action == "History" ? "page" : null)">
-                    <i class="ph ph-clock-counter-clockwise text-lg" aria-hidden="true"></i><span class="hidden sm:inline">History</span>
-                </a>
+            <nav class="flex items-stretch gap-5" aria-label="Dispatcher">
+                <a asp-controller="Admin" asp-action="Dashboard" class="@NavClass("Dashboard") flex items-center border-b-[3px] pt-[3px] text-[15px] font-semibold transition" aria-current="@(action == "Dashboard" ? "page" : null)">Live incidents</a>
+                <a asp-controller="Admin" asp-action="History" class="@NavClass("History") flex items-center border-b-[3px] pt-[3px] text-[15px] font-semibold transition" aria-current="@(action == "History" ? "page" : null)">History</a>
             </nav>
 
-            <div class="hidden md:block text-right leading-tight pl-3 border-l border-white/10">
-                <span class="block text-sm font-bold">@User.Identity?.Name</span>
-                <span class="block text-[11px] text-slate-400">On duty</span>
+            <div class="flex items-center gap-3 pl-5 border-l border-white/15">
+                <span class="hidden md:block text-sm text-white/80">@User.Identity?.Name</span>
+                <form asp-controller="Admin" asp-action="Logout" method="post">
+                    <button type="submit" class="text-sm font-semibold text-white/80 hover:text-white hover:underline underline-offset-4">Log out</button>
+                </form>
             </div>
-
-            <form asp-controller="Admin" asp-action="Logout" method="post">
-                <button type="submit" class="w-10 h-10 grid place-items-center rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-300 text-slate-300 transition" title="Log out" aria-label="Log out">
-                    <i class="ph ph-sign-out text-xl" aria-hidden="true"></i>
-                </button>
-            </form>
         </div>
     </header>
 
@@ -54,7 +41,7 @@
     </main>
 
     <div id="toast" role="status" aria-live="polite"
-         class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl bg-slate-800 border border-white/10 shadow-2xl text-sm font-semibold opacity-0 pointer-events-none transition-opacity"></div>
+         class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 px-4 py-3 rounded-md bg-ink text-white shadow-lg text-sm font-semibold opacity-0 pointer-events-none transition-opacity"></div>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

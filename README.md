@@ -37,8 +37,8 @@ Residents connect to a local public Wi-Fi node and send an emergency report in p
 | Language | C# |
 | Data access | Entity Framework Core 8 |
 | Database | SQLite |
-| Frontend | Razor Views, Tailwind CSS, vanilla JavaScript (fetch/AJAX) |
-| Icons / font | Phosphor Icons, Plus Jakarta Sans (bundled locally) |
+| Frontend | Razor Views, Tailwind CSS (Marikina theme), vanilla JavaScript (fetch/AJAX) |
+| Icons / fonts | Phosphor Icons, Public Sans, IBM Plex Mono (bundled locally) |
 | Architecture | Repository Pattern & Dependency Injection |
 | Testing | NUnit |
 

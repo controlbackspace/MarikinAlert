@@ -1,6 +1,6 @@
 @model DisasterReport
 @{
-    ViewData["Title"] = "Report Received";
+    ViewData["Title"] = "Report received";
 
     var tips = Model.Category switch
     {
@@ -12,44 +12,44 @@
     };
 }
 
-<div class="animate-fade-in-up text-center pt-4">
-    <div class="w-20 h-20 mx-auto rounded-full bg-emerald-500/15 border border-emerald-400/40 grid place-items-center">
-        <i class="ph-fill ph-check-circle text-5xl text-emerald-400" aria-hidden="true"></i>
+<div class="flex items-start gap-4">
+    <i class="ph-fill ph-check-circle text-[44px] leading-none text-success shrink-0" aria-hidden="true"></i>
+    <div>
+        <h1 class="text-[1.75rem] font-bold tracking-tight leading-tight">Report received</h1>
+        <p class="text-muted mt-1">Dispatchers can see it now.</p>
     </div>
-    <h1 class="text-3xl font-extrabold mt-5">Report received</h1>
-    <p class="text-slate-300 mt-2">Dispatchers can see your report now and are sorting it by urgency.</p>
-
-    <dl class="mt-6 rounded-2xl border border-white/10 bg-white/[.04] divide-y divide-white/10 text-left">
-        <div class="flex justify-between items-center p-4">
-            <dt class="text-sm text-slate-400">Reference no.</dt>
-            <dd class="font-mono font-bold text-lg">MA-@Model.Id.ToString("D5")</dd>
-        </div>
-        <div class="flex justify-between items-center p-4">
-            <dt class="text-sm text-slate-400">Location</dt>
-            <dd class="font-semibold text-right">@Model.LocationText</dd>
-        </div>
-        <div class="flex justify-between items-center p-4">
-            <dt class="text-sm text-slate-400">Sorted as</dt>
-            <dd><partial name="_PriorityBadge" model="Model" /></dd>
-        </div>
-    </dl>
-
-    @if (Model.ContactNumber is not null)
-    {
-        <p class="mt-4 text-sm text-slate-300"><i class="ph ph-phone text-emerald-400" aria-hidden="true"></i> Keep your phone on. A dispatcher may call <strong class="text-white">@Model.ContactNumber</strong>.</p>
-    }
-
-    <section class="mt-8 text-left rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
-        <h2 class="font-bold text-amber-200 flex items-center gap-2"><i class="ph-fill ph-shield-warning text-xl" aria-hidden="true"></i> While you wait</h2>
-        <ul class="mt-3 space-y-2 text-slate-100">
-            @foreach (var tip in tips)
-            {
-                <li class="flex gap-2"><i class="ph ph-check text-amber-300 mt-1 shrink-0" aria-hidden="true"></i>@tip</li>
-            }
-        </ul>
-    </section>
-
-    <a asp-action="Create" class="mt-8 inline-flex items-center justify-center gap-2 w-full rounded-2xl border border-white/15 py-4 font-bold hover:bg-white/5 transition">
-        <i class="ph ph-plus-circle text-xl" aria-hidden="true"></i> Send another report
-    </a>
 </div>
+
+<dl class="mt-7 border-y border-line divide-y divide-line">
+    <div class="flex justify-between items-baseline gap-4 py-3.5">
+        <dt class="text-muted">Reference no.</dt>
+        <dd class="font-mono text-lg">MA-@Model.Id.ToString("D5")</dd>
+    </div>
+    <div class="flex justify-between items-baseline gap-4 py-3.5">
+        <dt class="text-muted shrink-0">Location</dt>
+        <dd class="font-semibold text-right">@Model.LocationText</dd>
+    </div>
+    <div class="flex justify-between items-center gap-4 py-3.5">
+        <dt class="text-muted">Sorted as</dt>
+        <dd><partial name="_PriorityBadge" model="Model" /></dd>
+    </div>
+</dl>
+
+@if (Model.ContactNumber is not null)
+{
+    <p class="mt-4 text-[15px]">Keep your phone on. A dispatcher may call <strong>@Model.ContactNumber</strong>.</p>
+}
+
+<section class="mt-8 bg-surface border-l-4 border-accent rounded-r-md px-5 py-4">
+    <h2 class="font-bold">While you wait</h2>
+    <ul class="mt-2.5 space-y-2 list-disc pl-5 marker:text-accent">
+        @foreach (var tip in tips)
+        {
+            <li>@tip</li>
+        }
+    </ul>
+</section>
+
+<a asp-action="Create" class="mt-8 inline-flex items-center gap-1.5 font-semibold text-primary hover:underline underline-offset-4">
+    <i class="ph ph-arrow-left" aria-hidden="true"></i> Send another report
+</a>

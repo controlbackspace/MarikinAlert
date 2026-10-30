@@ -2,9 +2,9 @@
 @{
     var accent = Model.Priority switch
     {
-        ReportPriority.Critical => "border-l-red-500",
-        ReportPriority.High => "border-l-amber-400",
-        _ => "border-l-slate-500"
+        ReportPriority.Critical => "border-l-danger",
+        ReportPriority.High => "border-l-accent",
+        _ => "border-l-line"
     };
     var reference = $"MA-{Model.Id:D5}";
     var local = Marikina.ToLocal(Model.CreatedAtUtc);
@@ -15,65 +15,55 @@
         $"Reported: {local:MMM d, h:mm tt}" +
         (Model.SenderName is null && Model.ContactNumber is null ? "" : $" by {Model.SenderName ?? "resident"}{(Model.ContactNumber is null ? "" : $" ({Model.ContactNumber})")}");
 }
-<article data-id="@Model.Id" data-priority="@Model.Priority" class="incident rounded-xl bg-panel border border-white/10 border-l-4 @accent p-5 shadow-lg">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-1.5">
-            <partial name="_PriorityBadge" model="Model" />
-            <partial name="_StatusBadge" model="Model" />
+<article data-id="@Model.Id" data-priority="@Model.Priority" class="incident bg-white border border-line border-l-[5px] @accent rounded-md">
+    <div class="px-5 pt-4 pb-4">
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <partial name="_PriorityBadge" model="Model" />
+                <partial name="_StatusBadge" model="Model" />
+            </div>
+            <div class="text-sm text-muted">
+                <time datetime="@Model.CreatedAtUtc.ToString("o")" title="@local.ToString("MMMM d, yyyy h:mm tt")">@Marikina.TimeAgo(Model.CreatedAtUtc)</time>
+                <span class="font-mono text-[13px] ml-2">@reference</span>
+            </div>
         </div>
-        <div class="text-right text-xs text-slate-400 font-mono">
-            <time datetime="@Model.CreatedAtUtc.ToString("o")" title="@local.ToString("MMMM d, yyyy h:mm tt")">@Marikina.TimeAgo(Model.CreatedAtUtc)</time>
-            <span class="block text-slate-500">@reference</span>
+
+        <h3 class="mt-2.5 text-lg font-bold leading-snug">@Model.LocationText</h3>
+        <p class="mt-1 text-[15px] leading-relaxed break-words max-w-3xl">&ldquo;@Model.RawMessage&rdquo;</p>
+
+        <div class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">
+            <span>@(Model.SenderName ?? "No name given")</span>
+            @if (Model.ContactNumber is not null)
+            {
+                <a href="tel:@Model.ContactNumber" class="font-mono text-[13px] text-primary hover:underline">@Model.ContactNumber</a>
+            }
+            @if (Model.MatchedKeywords is not null)
+            {
+                <span>Flagged for <span class="text-ink">@Model.MatchedKeywords</span></span>
+            }
+            @if (Model.RelayedTo is not null)
+            {
+                <span class="text-primary font-semibold">Relayed to @Model.RelayedTo</span>
+            }
         </div>
     </div>
 
-    <h3 class="mt-3 text-lg font-extrabold leading-snug flex items-start gap-2">
-        <i class="ph-fill ph-map-pin text-emerald-400 mt-1 shrink-0" aria-hidden="true"></i>
-        <span>@Model.LocationText</span>
-    </h3>
-    <p class="mt-2 text-slate-200 leading-relaxed break-words">&ldquo;@Model.RawMessage&rdquo;</p>
-
-    @if (Model.MatchedKeywords is not null)
-    {
-        <p class="mt-2 text-xs text-slate-400">Flagged for: <span class="text-slate-300 font-semibold">@Model.MatchedKeywords</span></p>
-    }
-    @if (Model.RelayedTo is not null)
-    {
-        <p class="mt-2 text-xs text-violet-300 font-semibold flex items-center gap-1"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Relayed to @Model.RelayedTo</p>
-    }
-
-    <div class="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-300">
-            <span class="flex items-center gap-1.5"><i class="ph ph-user text-slate-400" aria-hidden="true"></i>@(Model.SenderName ?? "Anonymous")</span>
-            @if (Model.ContactNumber is not null)
-            {
-                <a href="tel:@Model.ContactNumber" class="flex items-center gap-1.5 font-mono hover:text-emerald-300"><i class="ph ph-phone text-slate-400" aria-hidden="true"></i>@Model.ContactNumber</a>
-            }
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-            @if (!Model.IsVerified)
-            {
-                <form asp-action="Verify" asp-route-id="@Model.Id" method="post" data-ajax data-done="Marked as verified">
-                    <button class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-ink text-sm font-bold px-3 py-2 transition">
-                        <i class="ph ph-seal-check text-base" aria-hidden="true"></i>Verify
-                    </button>
-                </form>
-            }
-            <button type="button" data-relay="@Model.Id" data-agency="@Marikina.SuggestedAgency(Model.Category)" data-summary="@summary"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/40 bg-sky-400/10 text-sky-200 hover:bg-sky-400/20 text-sm font-bold px-3 py-2 transition">
-                <i class="ph ph-paper-plane-tilt text-base" aria-hidden="true"></i>@(Model.RelayedTo is null ? "Relay to agency" : "Relay again")
-            </button>
-            <form asp-action="Resolve" asp-route-id="@Model.Id" method="post" data-ajax data-done="Moved to History as resolved">
-                <button class="inline-flex items-center gap-1.5 rounded-lg border border-white/15 hover:bg-white/10 text-sm font-bold px-3 py-2 transition">
-                    <i class="ph ph-check-circle text-base" aria-hidden="true"></i>Resolve
-                </button>
+    <div class="px-5 py-3 border-t border-line bg-surface/60 flex flex-wrap items-center gap-2">
+        @if (!Model.IsVerified)
+        {
+            <form asp-action="Verify" asp-route-id="@Model.Id" method="post" data-ajax data-done="Marked as verified">
+                <button class="rounded-md bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-3.5 py-2 transition active:translate-y-px">Verify</button>
             </form>
-            <form asp-action="Dismiss" asp-route-id="@Model.Id" method="post" data-ajax data-done="Archived as noise" data-confirm="Archive @reference as noise / false alarm? It will move to History.">
-                <button class="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 text-amber-200 hover:bg-amber-400/10 text-sm font-bold px-3 py-2 transition">
-                    <i class="ph ph-archive text-base" aria-hidden="true"></i>Archive as noise
-                </button>
-            </form>
-        </div>
+        }
+        <button type="button" data-relay="@Model.Id" data-agency="@Marikina.SuggestedAgency(Model.Category)" data-summary="@summary"
+                class="rounded-md border border-primary text-primary hover:bg-primary/5 text-sm font-semibold px-3.5 py-[7px] transition active:translate-y-px">
+            @(Model.RelayedTo is null ? "Relay to agency" : "Relay again")
+        </button>
+        <form asp-action="Resolve" asp-route-id="@Model.Id" method="post" data-ajax data-done="Moved to History as resolved">
+            <button class="rounded-md text-sm font-semibold text-ink hover:bg-black/5 px-3 py-2 transition">Resolve</button>
+        </form>
+        <form asp-action="Dismiss" asp-route-id="@Model.Id" method="post" data-ajax data-done="Archived as noise" data-confirm="Archive @reference as noise / false alarm? It will move to History." class="ml-auto">
+            <button class="rounded-md text-sm font-semibold text-muted hover:text-danger hover:bg-danger/5 px-3 py-2 transition">Archive as noise</button>
+        </form>
     </div>
 </article>

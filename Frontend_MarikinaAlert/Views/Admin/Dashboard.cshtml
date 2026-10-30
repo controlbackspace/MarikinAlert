@@ -1,40 +1,34 @@
 @model IncidentFeedViewModel
 @{
-    ViewData["Title"] = "Live Incidents";
+    ViewData["Title"] = "Live incidents";
     Layout = "_AdminLayout";
 }
 
-<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+<div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
     <div>
-        <h1 class="text-2xl font-extrabold">Live Incidents</h1>
-        <p class="text-sm text-slate-400 mt-1 flex items-center gap-2">
-            <span class="relative flex w-2 h-2" aria-hidden="true">
-                <span id="live-ping" class="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
-                <span id="live-dot" class="relative inline-flex w-2 h-2 rounded-full bg-emerald-400"></span>
-            </span>
+        <h1 class="text-2xl font-bold tracking-tight">Live incidents</h1>
+        <p class="text-sm text-muted mt-1 flex items-center gap-2">
+            <span id="live-dot" class="w-2 h-2 rounded-full bg-success" aria-hidden="true"></span>
             <span id="live-status">Updating automatically</span>
         </p>
     </div>
 
-    <div class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-extrabold uppercase text-red-300">
-            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse" aria-hidden="true"></span>
-            <span id="critical-count">@Model.CriticalCount</span> critical
-        </span>
-        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 text-xs font-extrabold uppercase text-slate-300">
-            <span id="open-count">@Model.OpenCount</span> open
-        </span>
-        <button type="button" id="sound-toggle" aria-pressed="false" title="Play a sound when a new critical report arrives"
-                class="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/5">
-            <i class="ph ph-speaker-slash text-base" aria-hidden="true"></i><span>Sound off</span>
-        </button>
-    </div>
+    <dl class="flex items-stretch divide-x divide-line bg-white border border-line rounded-md">
+        <div class="px-4 py-2">
+            <dt class="text-xs text-muted">Critical</dt>
+            <dd id="critical-count" class="text-xl font-bold text-danger tabular-nums leading-tight">@Model.CriticalCount</dd>
+        </div>
+        <div class="px-4 py-2">
+            <dt class="text-xs text-muted">Open</dt>
+            <dd id="open-count" class="text-xl font-bold tabular-nums leading-tight">@Model.OpenCount</dd>
+        </div>
+    </dl>
 </div>
 
-<form id="filters" asp-action="Dashboard" method="get" class="flex flex-wrap items-center gap-3 mb-6 rounded-xl border border-white/10 bg-panel/80 p-3">
-    <label class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-        Category
-        <select name="category" class="rounded-lg bg-ink border border-white/15 px-3 py-2 text-sm font-semibold text-white normal-case tracking-normal">
+<form id="filters" asp-action="Dashboard" method="get" class="mt-6 mb-4 flex flex-wrap items-end gap-3">
+    <label class="text-sm font-semibold">
+        <span class="block mb-1">Category</span>
+        <select name="category" class="field !min-h-0 !py-2 w-44 text-[15px]">
             <option value="">All categories</option>
             @foreach (var c in Enum.GetValues<ReportCategory>())
             {
@@ -42,57 +36,62 @@
             }
         </select>
     </label>
-    <label class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-        Status
-        <select name="status" class="rounded-lg bg-ink border border-white/15 px-3 py-2 text-sm font-semibold text-white normal-case tracking-normal">
+    <label class="text-sm font-semibold">
+        <span class="block mb-1">Status</span>
+        <select name="status" class="field !min-h-0 !py-2 w-40 text-[15px]">
             <option value="">All open</option>
             <option value="Active" selected="@(Model.Status == ReportStatus.Active)">New</option>
             <option value="Verified" selected="@(Model.Status == ReportStatus.Verified)">Verified</option>
             <option value="Relayed" selected="@(Model.Status == ReportStatus.Relayed)">Relayed</option>
         </select>
     </label>
-    <noscript><button class="rounded-lg bg-white/10 px-3 py-2 text-sm font-bold">Apply</button></noscript>
-    <a asp-action="Dashboard" class="text-sm font-semibold text-slate-400 hover:text-white ml-auto">Clear filters</a>
+    <noscript><button class="rounded-md bg-primary text-white px-3.5 py-2 text-sm font-semibold">Apply</button></noscript>
+    <a asp-action="Dashboard" class="text-sm font-semibold text-primary hover:underline underline-offset-4 pb-2.5">Clear filters</a>
+
+    <button type="button" id="sound-toggle" aria-pressed="false"
+            class="ml-auto inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-muted hover:text-ink">
+        <i class="ph ph-speaker-slash text-base" aria-hidden="true"></i><span>Sound alerts off</span>
+    </button>
 </form>
 
-<div id="feed" aria-live="polite" aria-busy="false">
+<div id="feed" aria-live="polite">
     <partial name="_IncidentFeed" model="Model" />
 </div>
 
 @* Relay to agency *@
-<dialog id="relay-dialog" class="w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-white/10 bg-panel text-white p-0 shadow-2xl">
-    <form asp-action="Relay" method="post" id="relay-form" class="p-6 space-y-4">
+<dialog id="relay-dialog" class="w-[calc(100%-2rem)] max-w-lg rounded-lg bg-white text-ink p-0 shadow-[0_20px_50px_rgba(0,33,112,.25)]">
+    <form asp-action="Relay" method="post" id="relay-form">
         <input type="hidden" name="id" />
-        <div class="flex items-start justify-between gap-4">
+        <div class="px-6 pt-5 pb-4 border-b border-line flex items-start justify-between gap-4">
             <div>
-                <h2 class="text-lg font-extrabold">Relay to agency</h2>
-                <p class="text-sm text-slate-400">Copy the details, send them by radio or phone, then confirm.</p>
+                <h2 class="text-lg font-bold">Relay to agency</h2>
+                <p class="text-sm text-muted mt-0.5">Send these details by radio or phone, then mark it as relayed.</p>
             </div>
-            <button type="button" data-close class="w-9 h-9 grid place-items-center rounded-lg hover:bg-white/10 text-slate-400" aria-label="Close"><i class="ph ph-x text-xl" aria-hidden="true"></i></button>
+            <button type="button" data-close class="w-9 h-9 -mr-2 grid place-items-center rounded-md hover:bg-black/5 text-muted" aria-label="Close"><i class="ph ph-x text-xl" aria-hidden="true"></i></button>
         </div>
 
-        <label class="block">
-            <span class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">Agency</span>
-            <select name="agency" class="w-full rounded-lg bg-ink border border-white/15 px-3 py-2.5 font-semibold">
-                @foreach (var agency in Marikina.Agencies)
-                {
-                    <option value="@agency">@agency</option>
-                }
-            </select>
-        </label>
+        <div class="px-6 py-5 space-y-4">
+            <label class="block">
+                <span class="block font-semibold mb-1.5">Agency</span>
+                <select name="agency" class="field">
+                    @foreach (var agency in Marikina.Agencies)
+                    {
+                        <option value="@agency">@agency</option>
+                    }
+                </select>
+            </label>
 
-        <label class="block">
-            <span class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">Message to relay</span>
-            <textarea id="relay-summary" rows="6" readonly class="w-full rounded-lg bg-ink border border-white/15 px-3 py-2.5 text-sm font-mono text-slate-200 resize-none"></textarea>
-        </label>
+            <label class="block">
+                <span class="block font-semibold mb-1.5">Details to relay</span>
+                <textarea id="relay-summary" rows="6" readonly class="field font-mono text-[13px] leading-relaxed resize-none bg-surface"></textarea>
+            </label>
+        </div>
 
-        <div class="flex flex-wrap justify-end gap-2 pt-2">
-            <button type="button" id="copy-summary" class="inline-flex items-center gap-1.5 rounded-lg border border-white/15 hover:bg-white/10 font-bold px-4 py-2.5">
-                <i class="ph ph-copy" aria-hidden="true"></i><span>Copy details</span>
+        <div class="px-6 py-4 border-t border-line bg-surface flex flex-wrap justify-end gap-2 rounded-b-lg">
+            <button type="button" id="copy-summary" class="rounded-md border border-line bg-white hover:bg-black/[.03] font-semibold px-4 py-2.5">
+                <span>Copy details</span>
             </button>
-            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-ink font-extrabold px-4 py-2.5">
-                <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>Mark as relayed
-            </button>
+            <button type="submit" class="rounded-md bg-primary hover:bg-primary-dark text-white font-semibold px-4 py-2.5">Mark as relayed</button>
         </div>
     </form>
 </dialog>

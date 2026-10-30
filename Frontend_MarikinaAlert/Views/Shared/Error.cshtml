@@ -4,18 +4,15 @@
     ViewData["Title"] = notFound ? "Page not found" : "Something went wrong";
 }
 
-<div class="text-center pt-10 animate-fade-in-up">
-    <i class="ph @(notFound ? "ph-map-trifold" : "ph-warning-circle") text-6xl text-emerald-400" aria-hidden="true"></i>
-    <h1 class="text-2xl font-extrabold mt-4">@ViewData["Title"]</h1>
-    <p class="text-slate-300 mt-2">
-        @(notFound ? "We couldn't find that page." : "The system hit a problem while handling your request.")
-        If this is an emergency, use the report form or call <a href="tel:161" class="font-bold text-white underline">Rescue 161</a>.
-    </p>
-    <a asp-controller="Reports" asp-action="Create" class="mt-8 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 text-ink font-extrabold px-6 py-4">
-        <i class="ph-fill ph-siren text-xl" aria-hidden="true"></i> Go to report form
-    </a>
-    @if (Model.ShowRequestId && !notFound)
-    {
-        <p class="mt-6 text-xs text-slate-500">Request ID: <code>@Model.RequestId</code></p>
-    }
-</div>
+<h1 class="text-[1.75rem] font-bold tracking-tight">@ViewData["Title"]</h1>
+<p class="text-muted mt-2 max-w-prose">
+    @(notFound ? "We couldn't find that page." : "The system hit a problem while handling your request.")
+    If this is an emergency, use the report form or call <a href="tel:161" class="font-semibold text-primary underline">Rescue 161</a>.
+</p>
+<a asp-controller="Reports" asp-action="Create" class="mt-7 inline-flex items-center gap-2 rounded-md bg-danger hover:bg-[#B71F1F] text-white font-bold px-5 py-3.5">
+    <i class="ph-fill ph-siren text-xl" aria-hidden="true"></i> Report an emergency
+</a>
+@if (Model.ShowRequestId && !notFound)
+{
+    <p class="mt-6 text-[13px] text-muted">Request ID: <code class="font-mono">@Model.RequestId</code></p>
+}
