@@ -7,7 +7,10 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+var mvc = builder.Services.AddControllersWithViews();
+
+// In Development, .cshtml edits show up on browser refresh without restarting the app.
+if (builder.Environment.IsDevelopment()) mvc.AddRazorRuntimeCompilation();
 
 // SQLite file lives next to the app so each node (admin laptop) has its own local copy.
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "marikinalert.db");
