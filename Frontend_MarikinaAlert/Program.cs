@@ -1,13 +1,20 @@
+using System.Globalization;
 using Frontend_MarikinaAlert.Data;
+using Frontend_MarikinaAlert.Localization;
 using Frontend_MarikinaAlert.Repositories;
 using Frontend_MarikinaAlert.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var mvc = builder.Services.AddControllersWithViews();
+// Resident pages can switch between English and Filipino; validation messages follow the same language.
+builder.Services.AddSingleton<IStringLocalizerFactory, DictionaryStringLocalizerFactory>();
+builder.Services.AddLocalization();
+var mvc = builder.Services.AddControllersWithViews().AddDataAnnotationsLocalization();
 
 // In Development, .cshtml edits show up on browser refresh without restarting the app.
 if (builder.Environment.IsDevelopment()) mvc.AddRazorRuntimeCompilation();
@@ -40,6 +47,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
+    SchemaPatches.Apply(db);
     // WAL lets the dashboard read while hundreds of residents are writing reports.
     db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
 }
@@ -56,6 +64,14 @@ app.UseStatusCodePagesWithReExecute("/Home/Error", "?code={0}");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Only the UI language switches; number and date formatting stays English so the dispatcher views don't change.
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en"),
+    SupportedCultures = [new CultureInfo("en")],
+    SupportedUICultures = [new CultureInfo("en"), new CultureInfo("fil")]
+});
 
 app.UseRouting();
 

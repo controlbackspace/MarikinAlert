@@ -1,6 +1,7 @@
 @model DisasterReport
+@inject IStringLocalizer<Translations> T
 @{
-    ViewData["Title"] = "Report received";
+    ViewData["Title"] = T["Report received"].Value;
 
     var tips = Model.Category switch
     {
@@ -13,40 +14,56 @@
 }
 
 <div class="border-l-4 border-success pl-4">
-    <h1 class="text-[1.75rem] font-bold tracking-tight leading-tight">Report received</h1>
-    <p class="text-muted mt-1">Dispatchers can see it now.</p>
+    <h1 class="text-[1.75rem] font-bold tracking-tight leading-tight">@T["Report received"]</h1>
+    <p class="text-muted mt-1">@T["Dispatchers can see it now."]</p>
 </div>
+
+@if (Model.TrackingCode is not null)
+{
+    @* data-* lets site.js remember this report on the phone for the "Check my report" page. *@
+    <section id="tracking" data-code="@Model.TrackingCodeDisplay" data-ref="MA-@Model.Id.ToString("D5")" data-created="@Model.CreatedAtUtc.ToString("o")"
+             class="mt-7 border border-primary/30 bg-primary/[.04] rounded-md px-5 py-4">
+        <h2 class="text-sm font-semibold text-muted">@T["Your tracking code"]</h2>
+        <p class="font-mono text-[1.75rem] leading-tight tracking-wider mt-1 select-all">@Model.TrackingCodeDisplay</p>
+        <p class="text-sm text-muted mt-1.5">@T["Use it to check the status of your report later. It's also saved on this phone."]</p>
+        <a asp-action="Status" asp-route-code="@Model.TrackingCodeDisplay" class="inline-block mt-2 font-semibold text-primary underline underline-offset-2">@T["Check status"]</a>
+    </section>
+}
 
 <dl class="mt-7 border-y border-line divide-y divide-line">
     <div class="flex justify-between items-baseline gap-4 py-3.5">
-        <dt class="text-muted">Reference no.</dt>
+        <dt class="text-muted">@T["Reference no."]</dt>
         <dd class="font-mono text-lg">MA-@Model.Id.ToString("D5")</dd>
     </div>
     <div class="flex justify-between items-baseline gap-4 py-3.5">
-        <dt class="text-muted shrink-0">Location</dt>
+        <dt class="text-muted shrink-0">@T["Location"]</dt>
         <dd class="font-semibold text-right">@Model.LocationText</dd>
     </div>
     <div class="flex justify-between items-center gap-4 py-3.5">
-        <dt class="text-muted">Sorted as</dt>
+        <dt class="text-muted">@T["Sorted as"]</dt>
         <dd><partial name="_PriorityBadge" model="Model" /></dd>
     </div>
 </dl>
 
 @if (Model.ContactNumber is not null)
 {
-    <p class="mt-4 text-[15px]">Keep your phone on. A dispatcher may call <strong>@Model.ContactNumber</strong>.</p>
+    <p class="mt-4 text-[15px]">@Html.Raw(T["Keep your phone on. A dispatcher may call {0}.", $"<strong>{System.Net.WebUtility.HtmlEncode(Model.ContactNumber)}</strong>"].Value)</p>
 }
 
 <section class="mt-8 bg-surface border-l-4 border-accent rounded-r-md px-5 py-4">
-    <h2 class="font-bold">While you wait</h2>
+    <h2 class="font-bold">@T["While you wait"]</h2>
     <ul class="mt-2.5 space-y-2 list-disc pl-5 marker:text-accent">
         @foreach (var tip in tips)
         {
-            <li>@tip</li>
+            <li>@T[tip]</li>
         }
     </ul>
 </section>
 
 <a asp-action="Create" class="mt-8 inline-block font-semibold text-primary hover:underline underline-offset-4">
-    Send another report
+    @T["Send another report"]
 </a>
+
+@section Scripts {
+    <script src="~/js/site.js" asp-append-version="true"></script>
+}

@@ -1,27 +1,35 @@
 ﻿@model CreateReportViewModel
+@inject IStringLocalizer<Translations> T
 @{
-    ViewData["Title"] = "Report an emergency";
+    ViewData["Title"] = T["Report an emergency"].Value;
 
     var quickPicks = new[]
     {
-        (Value: ReportCategory.Fire, Label: "Sunog", Sub: "Fire"),
-        (Value: ReportCategory.Flood, Label: "Baha", Sub: "Flood"),
-        (Value: ReportCategory.Medical, Label: "Medical", Sub: "Injured or sick"),
-        (Value: ReportCategory.Collapse, Label: "Gumuho / Naipit", Sub: "Collapse or trapped")
+        (Value: ReportCategory.Fire, Label: T["Fire"].Value, Sub: T["Flames or smoke"].Value),
+        (Value: ReportCategory.Flood, Label: T["Flood"].Value, Sub: T["Rising water"].Value),
+        (Value: ReportCategory.Medical, Label: T["Medical"].Value, Sub: T["Injured or sick"].Value),
+        (Value: ReportCategory.Collapse, Label: T["Collapse / Trapped"].Value, Sub: T["Building fell or someone is stuck"].Value)
     };
 }
 
-<h1 class="text-[1.75rem] sm:text-3xl font-bold tracking-tight leading-tight">Report an emergency</h1>
-<p class="text-muted mt-2 max-w-prose">Tell us what's happening and where. Dispatchers see the most urgent reports first.</p>
+<h1 class="text-[1.75rem] sm:text-3xl font-bold tracking-tight leading-tight">@T["Report an emergency"]</h1>
+<p class="text-muted mt-2 max-w-prose">@T["Tell us what's happening and where. Dispatchers see the most urgent reports first."]</p>
+<p class="text-sm mt-2">
+    @T["Already sent a report?"]
+    <a asp-action="Status" class="font-semibold text-primary underline underline-offset-2">@T["Check its status"]</a>
+</p>
 
-<form asp-action="Create" method="post" id="report-form" class="mt-8 space-y-9" novalidate>
+<form asp-action="Create" method="post" id="report-form" class="mt-8 space-y-9" novalidate
+      data-msg-send="@T["Send emergency report"]" data-msg-sending="@T["Sending…"]" data-msg-retry="@T["Try again"]"
+      data-msg-network="@T["Check that you're still connected to the Wi-Fi. Your message is saved on this phone."]"
+      data-msg-server="@T["The system had a problem. Reload the page and send again. Your message is saved on this phone."]">
 
     <div asp-validation-summary="ModelOnly" class="text-danger text-sm font-semibold"></div>
 
     @* What *@
     <fieldset>
-        <legend class="text-lg font-bold">What is happening?</legend>
-        <p class="text-sm text-muted mt-1 mb-4">Pick one if it fits, then describe it below.</p>
+        <legend class="text-lg font-bold">@T["What is happening?"]</legend>
+        <p class="text-sm text-muted mt-1 mb-4">@T["Pick one if it fits, then describe it below."]</p>
 
         <div class="grid grid-cols-2 gap-2.5">
             @foreach (var pick in quickPicks)
@@ -42,12 +50,12 @@
         </div>
 
         <div class="mt-5">
-            <label asp-for="RawMessage" class="block font-semibold mb-1.5">Describe the emergency</label>
+            <label asp-for="RawMessage" class="block font-semibold mb-1.5">@T["Describe the emergency"]</label>
             <textarea asp-for="RawMessage" rows="5" maxlength="1000" aria-describedby="msg-help"
                       class="field resize-y leading-relaxed"
-                      placeholder="Hal. Tulong! May nasusunog na bahay dito sa kanto, may naipit sa loob..."></textarea>
+                      placeholder="@T["E.g. Help! A house is on fire at the corner, someone is trapped inside..."]"></textarea>
             <div class="flex justify-between gap-4 mt-1.5 text-[13px] text-muted">
-                <p id="msg-help">Tagalog or English is fine. Say if someone is trapped, injured, or unconscious.</p>
+                <p id="msg-help">@T["Tagalog or English is fine. Say if someone is trapped, injured, or unconscious."]</p>
                 <span id="msg-count" class="font-mono shrink-0" aria-live="polite">0/1000</span>
             </div>
             <span asp-validation-for="RawMessage"></span>
@@ -56,12 +64,12 @@
 
     @* Where *@
     <fieldset class="space-y-4">
-        <legend class="text-lg font-bold mb-3">Where are you?</legend>
+        <legend class="text-lg font-bold mb-3">@T["Where are you?"]</legend>
 
         <div>
             <label asp-for="Barangay" class="block font-semibold mb-1.5">Barangay</label>
             <select asp-for="Barangay" class="field">
-                <option value="">Select your barangay</option>
+                <option value="">@T["Select your barangay"]</option>
                 @foreach (var b in Marikina.Barangays)
                 {
                     <option value="@b">@b</option>
@@ -70,47 +78,47 @@
             <span asp-validation-for="Barangay"></span>
         </div>
         <div>
-            <label asp-for="Landmark" class="block font-semibold mb-1.5">Street or landmark <span class="font-normal text-muted">(helps rescuers find you)</span></label>
-            <input asp-for="Landmark" autocomplete="street-address" class="field" placeholder="Hal. Tapat ng Mercury Drug, J.P. Rizal St." />
+            <label asp-for="Landmark" class="block font-semibold mb-1.5">@T["Street or landmark"] <span class="font-normal text-muted">@T["(helps rescuers find you)"]</span></label>
+            <input asp-for="Landmark" autocomplete="street-address" class="field" placeholder="@T["E.g. In front of Mercury Drug, J.P. Rizal St."]" />
             <span asp-validation-for="Landmark"></span>
         </div>
     </fieldset>
 
     @* Who *@
     <fieldset class="space-y-4">
-        <legend class="text-lg font-bold mb-3">How can we reach you? <span class="font-normal text-muted text-base">Optional</span></legend>
+        <legend class="text-lg font-bold mb-3">@T["How can we reach you?"] <span class="font-normal text-muted text-base">@T["Optional"]</span></legend>
 
         <div>
-            <label asp-for="SenderName" class="block font-semibold mb-1.5">Your name</label>
-            <input asp-for="SenderName" autocomplete="name" class="field" placeholder="Hal. Maria Santos" />
+            <label asp-for="SenderName" class="block font-semibold mb-1.5">@T["Your name"]</label>
+            <input asp-for="SenderName" autocomplete="name" class="field" placeholder="@T["E.g. Maria Santos"]" />
         </div>
         <div>
-            <label asp-for="ContactNumber" class="block font-semibold mb-1.5">Mobile number</label>
+            <label asp-for="ContactNumber" class="block font-semibold mb-1.5">@T["Mobile number"]</label>
             <input asp-for="ContactNumber" type="tel" inputmode="tel" autocomplete="tel" class="field" placeholder="0917 123 4567" />
             <span asp-validation-for="ContactNumber"></span>
         </div>
     </fieldset>
 
     <p class="text-[13px] text-muted">
-        Your report goes straight to Marikina dispatchers over the local network. No internet needed.
+        @T["Your report goes straight to Marikina dispatchers over the local network. No internet needed."]
     </p>
 
     @* Stays pinned to the bottom of the screen while scrolling, so it's always one tap away. *@
     <div class="sticky bottom-0 z-10 -mx-4 px-4 pt-3 bg-white/95 backdrop-blur border-t border-line" style="padding-bottom: max(.75rem, env(safe-area-inset-bottom))">
         <div id="send-error" role="alert" hidden class="mb-3 border-l-4 border-danger bg-danger/5 px-3 py-2.5 text-sm">
-            <p class="font-bold text-danger">Couldn't send your report.</p>
-            <p id="send-error-detail" class="text-ink mt-0.5">Check that you're still connected to the Wi-Fi. Your message is saved on this phone.</p>
+            <p class="font-bold text-danger">@T["Couldn't send your report."]</p>
+            <p id="send-error-detail" class="text-ink mt-0.5"></p>
         </div>
         <button type="submit" id="submit-btn"
                 class="w-full flex items-center justify-center bg-danger hover:bg-[#B71F1F] text-white font-bold text-lg py-4 rounded-md transition active:translate-y-px disabled:opacity-70 disabled:cursor-wait">
-            <span>Send emergency report</span>
+            <span>@T["Send emergency report"]</span>
         </button>
     </div>
 </form>
 
 <div id="draft-notice" hidden class="fixed top-3 inset-x-3 sm:inset-x-auto sm:right-4 sm:max-w-sm z-20 bg-ink text-white rounded-md px-4 py-3 text-sm shadow-lg flex items-center justify-between gap-4" role="status">
-    <span>We restored your unsent report.</span>
-    <button type="button" id="draft-clear" class="font-semibold underline underline-offset-2 shrink-0">Start over</button>
+    <span>@T["We restored your unsent report."]</span>
+    <button type="button" id="draft-clear" class="font-semibold underline underline-offset-2 shrink-0">@T["Start over"]</button>
 </div>
 
 @section Scripts {

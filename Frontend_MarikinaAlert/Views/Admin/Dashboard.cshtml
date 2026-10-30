@@ -30,6 +30,7 @@
 </div>
 
 <form id="filters" asp-action="Dashboard" method="get" class="mt-6 mb-4 flex flex-wrap items-end gap-3">
+    <input type="hidden" name="barangay" value="@Model.Barangay" />
     <label class="text-sm font-semibold">
         <span class="block mb-1">Category</span>
         <select name="category" class="field !min-h-0 !py-2 w-44 text-[15px]">

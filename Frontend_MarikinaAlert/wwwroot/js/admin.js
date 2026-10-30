@@ -61,9 +61,11 @@
     // ---------- live feed ----------
 
     let refreshing = false;
+    let refreshAgain = false;
     let lastSignature = null;
     async function refresh() {
-        if (refreshing) return;
+        // A filter change during a poll must not be dropped: run once more when the current poll ends.
+        if (refreshing) { refreshAgain = true; return; }
         refreshing = true;
         try {
             const res = await fetch(feedUrl().feed, { headers: { 'X-Requested-With': 'fetch' }, cache: 'no-store' });
@@ -106,6 +108,7 @@
             setOnline(false);
         } finally {
             refreshing = false;
+            if (refreshAgain) { refreshAgain = false; refresh(); }
         }
     }
 
@@ -118,6 +121,14 @@
         history.replaceState(null, '', feedUrl().page);
         knownIds = new Set(); // don't flash everything as "new" after a filter change
         refresh().then(() => { knownIds = currentIds(); });
+    });
+
+    // Barangay list: click a barangay to show only its reports; "Show all" clears it.
+    feed.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-barangay]');
+        if (!btn) return;
+        filters.elements.barangay.value = btn.dataset.barangay;
+        filters.dispatchEvent(new Event('change'));
     });
 
     document.getElementById('sound-toggle').addEventListener('click', function () {

@@ -1,4 +1,5 @@
 @model DisasterReport
+@inject IStringLocalizer<Translations> T
 @{
     var (priorityClass, priorityLabel) = Model.Priority switch
     {
@@ -7,6 +8,17 @@
         _ => ("bg-white text-muted border border-line", "Normal")
     };
     var categoryLabel = Model.Category.ToString();
+
+    // Residents can switch to Filipino; the dispatcher console stays in English.
+    if (!string.Equals(ViewContext.RouteData.Values["controller"] as string, "Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        priorityLabel = T[priorityLabel].Value;
+        categoryLabel = Model.Category switch
+        {
+            ReportCategory.Collapse => T["Collapse / Trapped"].Value,
+            _ => T[categoryLabel].Value
+        };
+    }
 }
 <span class="inline-flex items-center gap-2.5">
     <span class="@priorityClass text-xs font-bold px-2 py-0.5 rounded-sm">@priorityLabel</span>

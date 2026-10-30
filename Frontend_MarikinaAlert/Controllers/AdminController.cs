@@ -65,31 +65,41 @@ namespace Frontend_MarikinaAlert.Controllers
         public IActionResult Index() => RedirectToAction(nameof(Dashboard));
 
         [HttpGet]
-        public async Task<IActionResult> Dashboard(ReportCategory? category, ReportStatus? status) =>
-            View(await BuildFeedAsync(category, status));
+        public async Task<IActionResult> Dashboard(ReportCategory? category, ReportStatus? status, string? barangay) =>
+            View(await BuildFeedAsync(category, status, barangay));
 
         // Polled by admin.js every few seconds; returns only the incident list.
         [HttpGet]
-        public async Task<IActionResult> Feed(ReportCategory? category, ReportStatus? status) =>
-            PartialView("_IncidentFeed", await BuildFeedAsync(category, status));
+        public async Task<IActionResult> Feed(ReportCategory? category, ReportStatus? status, string? barangay) =>
+            PartialView("_IncidentFeed", await BuildFeedAsync(category, status, barangay));
 
-        private async Task<IncidentFeedViewModel> BuildFeedAsync(ReportCategory? category, ReportStatus? status)
+        private async Task<IncidentFeedViewModel> BuildFeedAsync(ReportCategory? category, ReportStatus? status, string? barangay)
         {
-            // Load every open report once: duplicates and counts must consider all of them, even when filtered.
-            var open = await reports.GetOpenAsync(null, null);
+            // Load every open report once: duplicates, counts and the barangay summary must consider all of them, even when filtered.
+            var open = await reports.GetOpenAsync();
             var now = DateTime.UtcNow;
+            var overdue = open.Where(r => IncidentInsights.IsOverdue(r, now)).Select(r => r.Id).ToHashSet();
+            barangay = string.IsNullOrWhiteSpace(barangay) ? null : barangay;
 
             return new IncidentFeedViewModel
             {
                 Reports = open
-                    .Where(r => (category is null || r.Category == category) && (status is null || r.Status == status))
+                    .Where(r => (category is null || r.Category == category)
+                             && (status is null || r.Status == status)
+                             && (barangay is null || r.Barangay == barangay))
                     .ToList(),
                 Category = category,
                 Status = status,
+                Barangay = barangay,
                 CriticalCount = open.Count(r => r.Priority == ReportPriority.Critical),
                 OpenCount = open.Count,
-                OverdueIds = open.Where(r => IncidentInsights.IsOverdue(r, now)).Select(r => r.Id).ToHashSet(),
-                DuplicateOf = IncidentInsights.FindDuplicates(open)
+                OverdueIds = overdue,
+                DuplicateOf = IncidentInsights.FindDuplicates(open),
+                BarangaySummary = open
+                    .GroupBy(r => r.Barangay)
+                    .Select(g => new BarangayCount(g.Key, g.Count(), g.Count(r => r.Priority == ReportPriority.Critical), g.Count(r => overdue.Contains(r.Id))))
+                    .OrderByDescending(b => b.Critical).ThenByDescending(b => b.Open).ThenBy(b => b.Barangay)
+                    .ToList()
             };
         }
 

@@ -1,12 +1,24 @@
-﻿// Resident report form: character counter, saved drafts, and sending without losing the message.
+﻿// Resident pages. Storage can be blocked (private mode, full disk); every page must still work without it.
+const store = {
+    get(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } },
+    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ } },
+    remove(key) { try { localStorage.removeItem(key); } catch { /* ignore */ } }
+};
+
+const MY_REPORTS_KEY = 'marikinalert-my-reports';
+
+// ---------- Report form: counter, saved drafts, remembered barangay, sending without losing the message ----------
 (function () {
     const form = document.getElementById('report-form');
     if (!form) return;
 
     const DRAFT_KEY = 'marikinalert-draft';
+    const BARANGAY_KEY = 'marikinalert-barangay';
     const FIELDS = ['RawMessage', 'Barangay', 'Landmark', 'SenderName', 'ContactNumber', 'SelectedCategory'];
+    const text = form.dataset; // translated button and error texts, rendered by the server
 
     const message = form.querySelector('textarea[name="RawMessage"]');
+    const barangay = form.elements.Barangay;
     const counter = document.getElementById('msg-count');
     const button = document.getElementById('submit-btn');
     const label = button.querySelector('span');
@@ -14,19 +26,12 @@
     const sendErrorDetail = document.getElementById('send-error-detail');
     const draftNotice = document.getElementById('draft-notice');
 
-    // ---------- character counter ----------
-
     function updateCount() {
         counter.textContent = `${message.value.length}/${message.maxLength}`;
     }
     message.addEventListener('input', updateCount);
 
-    // ---------- draft saved on this phone ----------
-    // Storage can be blocked (private mode, full disk); the form must still work without it.
-
-    function readDraft() {
-        try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { return null; }
-    }
+    // ----- draft -----
 
     function saveDraft() {
         const data = {};
@@ -34,17 +39,13 @@
             const el = form.elements[name];
             if (el) data[name] = el.value || '';
         }
-        try { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)); } catch { /* ignore */ }
-    }
-
-    function clearDraft() {
-        try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        store.set(DRAFT_KEY, data);
     }
 
     function restoreDraft() {
-        const draft = readDraft();
+        const draft = store.get(DRAFT_KEY);
         // Only restore into an empty form; never overwrite what the server sent back (e.g. validation errors).
-        if (!draft || !draft.RawMessage || message.value) return;
+        if (!draft || !draft.RawMessage || message.value) return false;
 
         for (const name of FIELDS) {
             const el = form.elements[name];
@@ -57,11 +58,13 @@
         }
         draftNotice.hidden = false;
         setTimeout(() => { draftNotice.hidden = true; }, 6000);
+        return true;
     }
 
     document.getElementById('draft-clear').addEventListener('click', function () {
-        clearDraft();
+        store.remove(DRAFT_KEY);
         form.reset();
+        restoreBarangay();
         updateCount();
         draftNotice.hidden = true;
     });
@@ -69,17 +72,27 @@
     form.addEventListener('input', saveDraft);
     form.addEventListener('change', saveDraft);
 
-    // ---------- sending ----------
+    // ----- remembered barangay -----
+    // Most people report from home, so the next report from this phone starts with the same barangay.
+
+    function restoreBarangay() {
+        const saved = store.get(BARANGAY_KEY);
+        if (saved && !barangay.value && [...barangay.options].some(o => o.value === saved)) barangay.value = saved;
+    }
+
+    barangay.addEventListener('change', () => { if (barangay.value) store.set(BARANGAY_KEY, barangay.value); });
+
+    // ----- sending -----
 
     function setSending(sending) {
         button.disabled = sending;
-        label.textContent = sending ? 'Sending…' : 'Send emergency report';
+        label.textContent = sending ? text.msgSending : text.msgSend;
     }
 
     function showError(detail) {
         sendErrorDetail.textContent = detail;
         sendError.hidden = false;
-        label.textContent = 'Try again';
+        label.textContent = text.msgRetry;
         button.disabled = false;
     }
 
@@ -99,24 +112,61 @@
             res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
         } catch {
             // Network dropped: keep everything on screen and let them retry.
-            showError("Check that you're still connected to the Wi-Fi. Your message is saved on this phone.");
+            showError(text.msgNetwork);
             return;
         }
 
         if (res.ok && res.redirected && new URL(res.url).pathname.toLowerCase().startsWith('/reports/submitted')) {
-            clearDraft();
+            store.remove(DRAFT_KEY);
             location.href = res.url;
         } else if (res.ok) {
             // Server-side validation failed; submit normally so the page shows the error messages.
             HTMLFormElement.prototype.submit.call(form);
         } else {
-            showError('The system had a problem. Reload the page and send again. Your message is saved on this phone.');
+            showError(text.msgServer);
         }
     });
 
     // Coming back with the browser's Back button: re-enable the form.
     window.addEventListener('pageshow', () => setSending(false));
 
-    restoreDraft();
+    if (!restoreDraft()) restoreBarangay();
     updateCount();
+})();
+
+// ---------- Confirmation page: remember this report on the phone ----------
+(function () {
+    const tracking = document.getElementById('tracking');
+    if (!tracking) return;
+
+    const mine = (store.get(MY_REPORTS_KEY) || []).filter(r => r.code !== tracking.dataset.code);
+    mine.unshift({ code: tracking.dataset.code, ref: tracking.dataset.ref, created: tracking.dataset.created });
+    store.set(MY_REPORTS_KEY, mine.slice(0, 10));
+})();
+
+// ---------- Check my report: list reports sent from this phone ----------
+(function () {
+    const section = document.getElementById('my-reports');
+    if (!section) return;
+
+    const mine = store.get(MY_REPORTS_KEY) || [];
+    if (!mine.length) return;
+
+    const list = section.querySelector('ul');
+    for (const r of mine) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '/Reports/Status?code=' + encodeURIComponent(r.code);
+        a.className = 'flex items-baseline justify-between gap-4 py-3 hover:bg-surface';
+        const code = document.createElement('span');
+        code.className = 'font-mono tracking-wider text-primary underline underline-offset-2';
+        code.textContent = r.code;
+        const meta = document.createElement('span');
+        meta.className = 'text-sm text-muted';
+        meta.textContent = `${r.ref} · ${new Date(r.created).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
+        a.append(code, meta);
+        li.append(a);
+        list.append(li);
+    }
+    section.hidden = false;
 })();

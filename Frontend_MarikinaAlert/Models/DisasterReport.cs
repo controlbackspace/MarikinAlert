@@ -60,6 +60,12 @@ namespace Frontend_MarikinaAlert.Models
         [MaxLength(100)]
         public string? RelayedTo { get; set; }
 
+        // Random code the resident uses to check their report's status. Ids are sequential and guessable; this isn't.
+        [MaxLength(12)]
+        public string? TrackingCode { get; set; }
+
+        public string? TrackingCodeDisplay => TrackingCode is { Length: 8 } c ? $"{c[..4]}-{c[4..]}" : TrackingCode;
+
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? UpdatedAtUtc { get; set; }
 
