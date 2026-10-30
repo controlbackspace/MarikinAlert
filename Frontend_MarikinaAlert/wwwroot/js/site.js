@@ -28,6 +28,6 @@
     // If the user comes back with the browser's Back button, re-enable the form.
     window.addEventListener('pageshow', function () {
         button.disabled = false;
-        button.querySelector('span').textContent = 'Request Help';
+        button.querySelector('span').textContent = 'Send emergency report';
     });
 })();
