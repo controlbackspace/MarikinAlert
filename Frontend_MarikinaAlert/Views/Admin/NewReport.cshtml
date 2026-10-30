@@ -1,0 +1,110 @@
+@model LogReportViewModel
+@{
+    ViewData["Title"] = "New report";
+    Layout = "_AdminLayout";
+
+    var sources = new[]
+    {
+        (Value: ReportSource.PhoneCall, Label: "Phone call"),
+        (Value: ReportSource.Radio, Label: "Radio"),
+        (Value: ReportSource.WalkIn, Label: "Walk-in")
+    };
+    var categories = new[]
+    {
+        (Value: ReportCategory.Fire, Label: "Fire"),
+        (Value: ReportCategory.Flood, Label: "Flood"),
+        (Value: ReportCategory.Medical, Label: "Medical"),
+        (Value: ReportCategory.Collapse, Label: "Collapse / Trapped")
+    };
+    const string pill = "block rounded-md border border-line bg-white px-3.5 py-2 text-sm font-semibold transition hover:border-primary/50 " +
+                        "peer-checked:border-primary peer-checked:bg-primary/[.06] peer-checked:text-primary peer-checked:shadow-[inset_0_0_0_1px_#0032a0] " +
+                        "peer-focus-visible:outline peer-focus-visible:outline-[3px] peer-focus-visible:outline-accent peer-focus-visible:outline-offset-2";
+}
+
+<div class="max-w-2xl">
+    <h1 class="text-2xl font-bold tracking-tight">New report</h1>
+    <p class="text-muted mt-1">For emergencies that come in by phone, radio or in person. It joins the live list like any other report and is marked as logged by you.</p>
+
+    <form asp-action="NewReport" method="post" class="mt-6 bg-white border border-line rounded-md divide-y divide-line">
+        <div asp-validation-summary="ModelOnly" class="text-danger text-sm font-semibold empty:hidden px-5 pt-4"></div>
+
+        <fieldset class="px-5 py-5">
+            <legend class="sr-only">How it came in</legend>
+            <p class="font-semibold mb-2">How did it come in?</p>
+            <div class="flex flex-wrap gap-2">
+                @foreach (var s in sources)
+                {
+                    <label class="cursor-pointer">
+                        <input type="radio" asp-for="Source" value="@s.Value" class="peer sr-only" />
+                        <span class="@pill">@s.Label</span>
+                    </label>
+                }
+            </div>
+            <span asp-validation-for="Source"></span>
+        </fieldset>
+
+        <fieldset class="px-5 py-5">
+            <legend class="sr-only">What is happening</legend>
+            <div>
+                <p class="font-semibold mb-2">Type <span class="font-normal text-muted">(optional, the message is checked too)</span></p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var c in categories)
+                    {
+                        <label class="cursor-pointer">
+                            <input type="radio" asp-for="SelectedCategory" value="@c.Value" class="peer sr-only" />
+                            <span class="@pill">@c.Label</span>
+                        </label>
+                    }
+                </div>
+            </div>
+            <div class="mt-4">
+                <label asp-for="RawMessage" class="block font-semibold mb-1.5">What the caller said</label>
+                <textarea asp-for="RawMessage" rows="4" maxlength="1000" class="field resize-y leading-relaxed"
+                          placeholder="E.g. Caller says their neighbor's house is on fire, two kids still inside."></textarea>
+                <span asp-validation-for="RawMessage"></span>
+            </div>
+        </fieldset>
+
+        <fieldset class="px-5 py-5 grid sm:grid-cols-2 gap-4">
+            <legend class="sr-only">Location</legend>
+            <div>
+                <label asp-for="Barangay" class="block font-semibold mb-1.5">Barangay</label>
+                <select asp-for="Barangay" class="field">
+                    <option value="">Select barangay</option>
+                    @foreach (var b in Marikina.Barangays)
+                    {
+                        <option value="@b">@b</option>
+                    }
+                </select>
+                <span asp-validation-for="Barangay"></span>
+            </div>
+            <div>
+                <label asp-for="Landmark" class="block font-semibold mb-1.5">Street or landmark</label>
+                <input asp-for="Landmark" class="field" placeholder="E.g. In front of Mercury Drug, J.P. Rizal St." />
+                <span asp-validation-for="Landmark"></span>
+            </div>
+        </fieldset>
+
+        <fieldset class="px-5 py-5 grid sm:grid-cols-2 gap-4">
+            <legend class="sr-only">Caller</legend>
+            <div>
+                <label asp-for="SenderName" class="block font-semibold mb-1.5">Caller's name <span class="font-normal text-muted">(optional)</span></label>
+                <input asp-for="SenderName" class="field" autocomplete="off" />
+            </div>
+            <div>
+                <label asp-for="ContactNumber" class="block font-semibold mb-1.5">Callback number <span class="font-normal text-muted">(optional)</span></label>
+                <input asp-for="ContactNumber" type="tel" class="field" autocomplete="off" placeholder="0917 123 4567" />
+                <span asp-validation-for="ContactNumber"></span>
+            </div>
+        </fieldset>
+
+        <div class="px-5 py-4 bg-surface/60 flex items-center gap-4">
+            <button type="submit" class="rounded-md bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2.5 transition active:translate-y-px">Add to live incidents</button>
+            <a asp-action="Dashboard" class="text-sm font-semibold text-muted hover:text-ink">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

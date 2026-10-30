@@ -14,7 +14,6 @@ namespace Frontend_MarikinaAlert.Localization
         {
             // Layout
             ["Skip to form"] = "Lumaktaw sa form",
-            ["Dispatcher login"] = "Login ng dispatcher",
             ["Can't use this form? Call {0} or {1}."] = "Hindi magamit ang form na ito? Tumawag sa {0} o {1}.",
             ["Check my report"] = "Tingnan ang ulat ko",
 

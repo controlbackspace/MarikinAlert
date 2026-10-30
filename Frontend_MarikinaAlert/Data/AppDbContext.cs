@@ -15,6 +15,7 @@ namespace Frontend_MarikinaAlert.Data
             report.Property(r => r.Category).HasConversion<string>().HasMaxLength(20);
             report.Property(r => r.Priority).HasConversion<string>().HasMaxLength(20);
             report.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
+            report.Property(r => r.Source).HasConversion<string>().HasMaxLength(20);
 
             // Separate int column for sorting, since text sorts "Critical" < "High" < "Normal" alphabetically.
             report.Property<int>("PriorityRank");

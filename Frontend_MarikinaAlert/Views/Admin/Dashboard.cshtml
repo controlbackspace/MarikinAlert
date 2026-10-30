@@ -4,6 +4,17 @@
     Layout = "_AdminLayout";
 }
 
+@if (TempData["LoggedRef"] is string loggedRef)
+{
+    <div class="mb-6 border-l-4 border-success bg-white border border-line rounded-md px-5 py-3.5 flex flex-wrap items-baseline gap-x-6 gap-y-1" role="status">
+        <p class="font-semibold">Report @loggedRef added to live incidents.</p>
+        @if (TempData["LoggedCode"] is string loggedCode)
+        {
+            <p class="text-sm text-muted">Tracking code for the caller: <span class="font-mono text-base text-ink tracking-wider select-all">@loggedCode</span></p>
+        }
+    </div>
+}
+
 <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
     <div>
         <h1 class="text-2xl font-bold tracking-tight">Live incidents</h1>

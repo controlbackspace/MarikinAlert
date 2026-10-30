@@ -49,6 +49,7 @@ else
                     <p class="text-[13px] text-muted mt-1">
                         Reported @Marikina.ToLocal(r.CreatedAtUtc).ToString("MMM d, h:mm tt") · Closed @closed.ToString("MMM d, h:mm tt")
                         @if (r.RelayedTo is not null) { <text>· Relayed to @r.RelayedTo</text> }
+                        @if (r.Source != ReportSource.App) { <text>· Logged by @(r.LoggedBy ?? "a dispatcher") via @r.SourceText</text> }
                     </p>
                 </div>
                 <form asp-action="Reopen" asp-route-id="@r.Id" method="post">

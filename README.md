@@ -26,6 +26,7 @@ Residents connect to a local public Wi-Fi node and send an emergency report in p
 - **IsVerified protocol:** Verify → Relay to agency → Resolve, or Archive as noise.
 - **Relay dialog** that suggests the right agency and lets you copy the report details for radio or phone.
 - **History page** with search and a Reopen button.
+- **New report** page for emergencies that come in by phone call, radio or walk-in. The card shows "Logged by (dispatcher) via phone call", and the dispatcher gets a tracking code to give the caller.
 
 ---
 
@@ -144,7 +145,7 @@ MarikinAlert/
 │   ├── Services/                   # IDisasterTriageService + Taglish keyword triage
 │   ├── Views/
 │   │   ├── Reports/                # Create (form), Submitted (confirmation)
-│   │   ├── Admin/                  # Login, Dashboard, History, incident card partials
+│   │   ├── Admin/                  # Login, Dashboard, History, New report, incident card partials
 │   │   └── Shared/                 # Resident + admin layouts, badges, error page
 │   └── wwwroot/
 │       ├── css/site.css

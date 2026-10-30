@@ -12,8 +12,8 @@
         $"[MarikinAlert {reference}] {Model.Priority.ToString().ToUpperInvariant()} - {Model.Category.ToString().ToUpperInvariant()}\n" +
         $"Location: {Model.LocationText}, Marikina City\n" +
         $"Report: \"{Model.RawMessage}\"\n" +
-        $"Reported: {local:MMM d, h:mm tt}" +
-        (Model.SenderName is null && Model.ContactNumber is null ? "" : $" by {Model.SenderName ?? "resident"}{(Model.ContactNumber is null ? "" : $" ({Model.ContactNumber})")}");
+        $"Reported: {local:MMM d, h:mm tt}" + (Model.Source == ReportSource.App ? "" : $" via {Model.SourceText}") +
+        (Model.SenderName is null && Model.ContactNumber is null ? "" : $" by {Model.SenderName ?? (Model.Source == ReportSource.App ? "resident" : "caller")}{(Model.ContactNumber is null ? "" : $" ({Model.ContactNumber})")}");
 
     // Hints from IncidentInsights, passed in by _IncidentFeed.
     var overdue = ViewData["Overdue"] as bool? == true;
@@ -52,6 +52,10 @@
         <p class="mt-1 text-[15px] leading-relaxed break-words max-w-3xl">&ldquo;@Model.RawMessage&rdquo;</p>
 
         <div class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">
+            @if (Model.Source != ReportSource.App)
+            {
+                <span class="text-ink font-semibold">Logged by @(Model.LoggedBy ?? "a dispatcher") via @Model.SourceText</span>
+            }
             <span>@(Model.SenderName ?? "No name given")</span>
             @if (Model.ContactNumber is not null)
             {
