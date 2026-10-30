@@ -9,8 +9,8 @@
     @(notFound ? "We couldn't find that page." : "The system hit a problem while handling your request.")
     If this is an emergency, use the report form or call <a href="tel:161" class="font-semibold text-primary underline">Rescue 161</a>.
 </p>
-<a asp-controller="Reports" asp-action="Create" class="mt-7 inline-flex items-center gap-2 rounded-md bg-danger hover:bg-[#B71F1F] text-white font-bold px-5 py-3.5">
-    <i class="ph-fill ph-siren text-xl" aria-hidden="true"></i> Report an emergency
+<a asp-controller="Reports" asp-action="Create" class="mt-7 inline-block rounded-md bg-danger hover:bg-[#B71F1F] text-white font-bold px-5 py-3.5">
+    Report an emergency
 </a>
 @if (Model.ShowRequestId && !notFound)
 {

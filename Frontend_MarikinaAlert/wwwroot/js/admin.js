@@ -96,6 +96,9 @@
             if (data) {
                 document.getElementById('critical-count').textContent = data.dataset.critical;
                 document.getElementById('open-count').textContent = data.dataset.open;
+                const overdue = document.getElementById('overdue-count');
+                overdue.textContent = data.dataset.overdue;
+                overdue.classList.toggle('text-danger', data.dataset.overdue > 0);
                 document.title = (data.dataset.critical > 0 ? `(${data.dataset.critical}) ` : '') + baseTitle;
             }
             setOnline(true);
@@ -120,7 +123,6 @@
     document.getElementById('sound-toggle').addEventListener('click', function () {
         soundOn = !soundOn;
         this.setAttribute('aria-pressed', soundOn);
-        this.querySelector('i').className = 'ph text-base ' + (soundOn ? 'ph-speaker-high' : 'ph-speaker-slash');
         this.querySelector('span').textContent = soundOn ? 'Sound alerts on' : 'Sound alerts off';
         this.classList.toggle('text-primary', soundOn);
         this.classList.toggle('border-primary', soundOn);

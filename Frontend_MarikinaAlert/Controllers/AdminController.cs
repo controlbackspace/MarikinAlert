@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Frontend_MarikinaAlert.Models;
 using Frontend_MarikinaAlert.Repositories;
+using Frontend_MarikinaAlert.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -72,14 +73,25 @@ namespace Frontend_MarikinaAlert.Controllers
         public async Task<IActionResult> Feed(ReportCategory? category, ReportStatus? status) =>
             PartialView("_IncidentFeed", await BuildFeedAsync(category, status));
 
-        private async Task<IncidentFeedViewModel> BuildFeedAsync(ReportCategory? category, ReportStatus? status) => new()
+        private async Task<IncidentFeedViewModel> BuildFeedAsync(ReportCategory? category, ReportStatus? status)
         {
-            Reports = await reports.GetOpenAsync(category, status),
-            Category = category,
-            Status = status,
-            CriticalCount = await reports.CountOpenAsync(ReportPriority.Critical),
-            OpenCount = await reports.CountOpenAsync()
-        };
+            // Load every open report once: duplicates and counts must consider all of them, even when filtered.
+            var open = await reports.GetOpenAsync(null, null);
+            var now = DateTime.UtcNow;
+
+            return new IncidentFeedViewModel
+            {
+                Reports = open
+                    .Where(r => (category is null || r.Category == category) && (status is null || r.Status == status))
+                    .ToList(),
+                Category = category,
+                Status = status,
+                CriticalCount = open.Count(r => r.Priority == ReportPriority.Critical),
+                OpenCount = open.Count,
+                OverdueIds = open.Where(r => IncidentInsights.IsOverdue(r, now)).Select(r => r.Id).ToHashSet(),
+                DuplicateOf = IncidentInsights.FindDuplicates(open)
+            };
+        }
 
         // ---------- Actions ----------
 

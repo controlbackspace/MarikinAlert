@@ -56,6 +56,11 @@ body {
   color: var(--color-text);
 }
 
+/* Utility classes like "flex" must not override the hidden attribute that scripts toggle. */
+[hidden] {
+  display: none !important;
+}
+
 h1, h2, h3 {
   text-wrap: balance;
 }

@@ -63,12 +63,5 @@ namespace Frontend_MarikinaAlert.Repositories
                 .Take(take)
                 .ToListAsync();
         }
-
-        public Task<int> CountOpenAsync(ReportPriority? priority = null)
-        {
-            var query = db.DisasterReports.Where(r => OpenStatuses.Contains(r.Status));
-            if (priority is not null) query = query.Where(r => r.Priority == priority);
-            return query.CountAsync();
-        }
     }
 }

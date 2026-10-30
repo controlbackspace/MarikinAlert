@@ -13,7 +13,5 @@ namespace Frontend_MarikinaAlert.Repositories
 
         /// <summary>Resolved and Dismissed reports, newest first.</summary>
         Task<IReadOnlyList<DisasterReport>> GetClosedAsync(ReportStatus? status, string? search, int take = 200);
-
-        Task<int> CountOpenAsync(ReportPriority? priority = null);
     }
 }

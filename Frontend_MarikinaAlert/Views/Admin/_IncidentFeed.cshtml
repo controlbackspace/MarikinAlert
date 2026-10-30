@@ -1,5 +1,5 @@
 @model IncidentFeedViewModel
-<div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" class="space-y-3">
+<div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" data-overdue="@Model.OverdueIds.Count" class="space-y-3">
     @if (Model.Reports.Count == 0)
     {
         <div class="bg-white border border-line rounded-md px-6 py-12 text-center">
@@ -11,7 +11,12 @@
     {
         @foreach (var report in Model.Reports)
         {
-            <partial name="_IncidentCard" model="report" />
+            var hints = new ViewDataDictionary(ViewData)
+            {
+                ["Overdue"] = Model.OverdueIds.Contains(report.Id),
+                ["DuplicateOf"] = Model.DuplicateOf.TryGetValue(report.Id, out var originalId) ? originalId : (int?)null
+            };
+            <partial name="_IncidentCard" model="report" view-data="hints" />
         }
     }
 </div>

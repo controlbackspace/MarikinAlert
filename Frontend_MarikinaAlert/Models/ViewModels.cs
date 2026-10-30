@@ -50,6 +50,12 @@ namespace Frontend_MarikinaAlert.Models
         public ReportStatus? Status { get; set; }
         public int CriticalCount { get; set; }
         public int OpenCount { get; set; }
+
+        // New reports left unhandled longer than IncidentInsights.OverdueAfter allows.
+        public IReadOnlySet<int> OverdueIds { get; set; } = new HashSet<int>();
+
+        // Report id -> id of the earlier report it probably duplicates.
+        public IReadOnlyDictionary<int, int> DuplicateOf { get; set; } = new Dictionary<int, int>();
     }
 
     public class HistoryViewModel
