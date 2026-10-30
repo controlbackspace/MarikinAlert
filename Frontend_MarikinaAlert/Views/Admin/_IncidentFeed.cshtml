@@ -1,17 +1,77 @@
 @model IncidentFeedViewModel
-<div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" class="space-y-3">
-    @if (Model.Reports.Count == 0)
-    {
-        <div class="bg-white border border-line rounded-md px-6 py-12 text-center">
-            <p class="text-lg font-bold">@(Model.Category is null && Model.Status is null ? "No open incidents" : "Nothing matches these filters")</p>
-            <p class="text-muted mt-1">New reports appear here on their own. You don't need to refresh.</p>
+@{
+    var filtered = Model.Category is not null || Model.Status is not null || Model.Barangay is not null;
+}
+<div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" data-overdue="@Model.OverdueIds.Count"
+     class="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-6 lg:items-start">
+
+    @* Open reports per barangay. Sits on the right on wide screens, above the list on smaller ones. *@
+    <aside class="mb-4 lg:mb-0 lg:order-2 lg:sticky lg:top-[4.5rem] bg-white border border-line rounded-md" aria-label="Open reports by barangay">
+        <div class="px-4 py-3 border-b border-line flex items-baseline justify-between gap-2">
+            <h2 class="font-bold">By barangay</h2>
+            @if (Model.Barangay is not null)
+            {
+                <button type="button" data-barangay="" class="text-sm font-semibold text-primary hover:underline underline-offset-4">Show all</button>
+            }
         </div>
-    }
-    else
-    {
-        @foreach (var report in Model.Reports)
+        @if (Model.BarangaySummary.Count == 0)
         {
-            <partial name="_IncidentCard" model="report" />
+            <p class="px-4 py-3 text-sm text-muted">No open reports.</p>
         }
-    }
+        else
+        {
+            <ul class="max-h-48 lg:max-h-[calc(100dvh-10rem)] overflow-y-auto divide-y divide-line text-[15px]">
+                @foreach (var b in Model.BarangaySummary)
+                {
+                    var active = b.Barangay == Model.Barangay;
+                    <li>
+                        <button type="button" data-barangay="@b.Barangay" aria-pressed="@(active ? "true" : "false")"
+                                class="w-full flex items-center justify-between gap-3 px-4 py-2 text-left transition @(active ? "bg-primary/[.07] shadow-[inset_3px_0_0_#0032a0]" : "hover:bg-surface")">
+                            <span class="font-semibold @(active ? "text-primary" : "")">@b.Barangay</span>
+                            <span class="flex items-center gap-2 text-sm tabular-nums shrink-0">
+                                @if (b.Overdue > 0)
+                                {
+                                    <span class="text-danger font-bold" title="@b.Overdue overdue">@b.Overdue late</span>
+                                }
+                                @if (b.Critical > 0)
+                                {
+                                    <span class="bg-danger text-white text-xs font-bold px-1.5 rounded-sm" title="@b.Critical critical">@b.Critical</span>
+                                }
+                                <span class="text-muted" title="@b.Open open">@b.Open</span>
+                            </span>
+                        </button>
+                    </li>
+                }
+            </ul>
+        }
+    </aside>
+
+    <div class="space-y-3 lg:order-1 min-w-0">
+        @if (Model.Barangay is not null)
+        {
+            <p class="text-sm">Showing <strong>Brgy. @Model.Barangay</strong> only.
+                <button type="button" data-barangay="" class="font-semibold text-primary underline underline-offset-2">Show all barangays</button>
+            </p>
+        }
+
+        @if (Model.Reports.Count == 0)
+        {
+            <div class="bg-white border border-line rounded-md px-6 py-12 text-center">
+                <p class="text-lg font-bold">@(filtered ? "Nothing matches these filters" : "No open incidents")</p>
+                <p class="text-muted mt-1">New reports appear here on their own. You don't need to refresh.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var report in Model.Reports)
+            {
+                var hints = new ViewDataDictionary(ViewData)
+                {
+                    ["Overdue"] = Model.OverdueIds.Contains(report.Id),
+                    ["DuplicateOf"] = Model.DuplicateOf.TryGetValue(report.Id, out var originalId) ? originalId : (int?)null
+                };
+                <partial name="_IncidentCard" model="report" view-data="hints" />
+            }
+        }
+    </div>
 </div>

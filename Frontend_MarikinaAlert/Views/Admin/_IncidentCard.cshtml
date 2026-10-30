@@ -14,8 +14,28 @@
         $"Report: \"{Model.RawMessage}\"\n" +
         $"Reported: {local:MMM d, h:mm tt}" +
         (Model.SenderName is null && Model.ContactNumber is null ? "" : $" by {Model.SenderName ?? "resident"}{(Model.ContactNumber is null ? "" : $" ({Model.ContactNumber})")}");
+
+    // Hints from IncidentInsights, passed in by _IncidentFeed.
+    var overdue = ViewData["Overdue"] as bool? == true;
+    var duplicateOf = ViewData["DuplicateOf"] as int?;
+    var waitingMinutes = (int)(DateTime.UtcNow - Model.CreatedAtUtc).TotalMinutes;
 }
-<article data-id="@Model.Id" data-priority="@Model.Priority" class="incident bg-white border border-line border-l-[5px] @accent rounded-md">
+<article id="incident-@Model.Id" data-id="@Model.Id" data-priority="@Model.Priority"
+         class="incident scroll-mt-20 bg-white border border-l-[5px] @accent rounded-md @(overdue ? "border-danger shadow-[0_0_0_1px_#D62828]" : "border-line")">
+    @if (overdue)
+    {
+        <p class="px-5 py-2 bg-danger text-white text-sm font-bold rounded-tr-[5px]">
+            Waiting @waitingMinutes min · not yet handled
+        </p>
+    }
+    @if (duplicateOf is int originalId)
+    {
+        <p class="px-5 py-2 bg-surface border-b border-line text-sm">
+            <span class="font-semibold">Possible duplicate</span> of
+            <a href="#incident-@originalId" class="font-mono text-[13px] text-primary underline underline-offset-2">MA-@originalId.ToString("D5")</a>.
+            Same barangay and type, reported within @IncidentInsights.DuplicateWindow.TotalMinutes min.
+        </p>
+    }
     <div class="px-5 pt-4 pb-4">
         <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1">

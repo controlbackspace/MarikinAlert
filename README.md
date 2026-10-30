@@ -38,7 +38,7 @@ Residents connect to a local public Wi-Fi node and send an emergency report in p
 | Data access | Entity Framework Core 8 |
 | Database | SQLite |
 | Frontend | Razor Views, Tailwind CSS (Marikina theme), vanilla JavaScript (fetch/AJAX) |
-| Icons / fonts | Phosphor Icons, Public Sans, IBM Plex Mono (bundled locally) |
+| Fonts | Public Sans, IBM Plex Mono (bundled locally) |
 | Architecture | Repository Pattern & Dependency Injection |
 | Testing | NUnit |
 
@@ -150,7 +150,7 @@ MarikinAlert/
 │       ├── css/site.css
 │       ├── js/site.js              # Report form behaviour
 │       ├── js/admin.js             # Live polling, actions, relay dialog
-│       └── lib/                    # Bundled offline assets (Tailwind, icons, fonts, jQuery)
+│       └── lib/                    # Bundled offline assets (Tailwind, fonts, jQuery)
 └── MarikinAlert.Tests/             # NUnit tests for the triage engine
 ```
 

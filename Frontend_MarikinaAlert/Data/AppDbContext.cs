@@ -21,6 +21,7 @@ namespace Frontend_MarikinaAlert.Data
 
             report.HasIndex(r => r.Status);
             report.HasIndex(r => r.CreatedAtUtc);
+            report.HasIndex(r => r.TrackingCode);
         }
 
         public override int SaveChanges()

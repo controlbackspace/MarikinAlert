@@ -48,8 +48,27 @@ namespace Frontend_MarikinaAlert.Models
         public IReadOnlyList<DisasterReport> Reports { get; set; } = [];
         public ReportCategory? Category { get; set; }
         public ReportStatus? Status { get; set; }
+        public string? Barangay { get; set; }
         public int CriticalCount { get; set; }
         public int OpenCount { get; set; }
+
+        // New reports left unhandled longer than IncidentInsights.OverdueAfter allows.
+        public IReadOnlySet<int> OverdueIds { get; set; } = new HashSet<int>();
+
+        // Report id -> id of the earlier report it probably duplicates.
+        public IReadOnlyDictionary<int, int> DuplicateOf { get; set; } = new Dictionary<int, int>();
+
+        // Open reports per barangay, busiest first. Always computed from all open reports, ignoring filters.
+        public IReadOnlyList<BarangayCount> BarangaySummary { get; set; } = [];
+    }
+
+    public record BarangayCount(string Barangay, int Open, int Critical, int Overdue);
+
+    public class ReportStatusViewModel
+    {
+        public string? Code { get; set; }
+        public DisasterReport? Report { get; set; }
+        public bool NotFound { get; set; }
     }
 
     public class HistoryViewModel

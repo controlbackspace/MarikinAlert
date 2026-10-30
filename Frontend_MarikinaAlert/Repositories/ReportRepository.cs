@@ -20,6 +20,9 @@ namespace Frontend_MarikinaAlert.Repositories
         public Task<DisasterReport?> GetByIdAsync(int id) =>
             db.DisasterReports.FirstOrDefaultAsync(r => r.Id == id);
 
+        public Task<DisasterReport?> GetByTrackingCodeAsync(string code) =>
+            db.DisasterReports.AsNoTracking().FirstOrDefaultAsync(r => r.TrackingCode == code);
+
         public async Task UpdateAsync(DisasterReport report)
         {
             report.UpdatedAtUtc = DateTime.UtcNow;
@@ -27,15 +30,11 @@ namespace Frontend_MarikinaAlert.Repositories
             await db.SaveChangesAsync();
         }
 
-        public async Task<IReadOnlyList<DisasterReport>> GetOpenAsync(ReportCategory? category, ReportStatus? status)
+        public async Task<IReadOnlyList<DisasterReport>> GetOpenAsync()
         {
-            var query = db.DisasterReports.AsNoTracking().Where(r => OpenStatuses.Contains(r.Status));
-
-            if (category is not null) query = query.Where(r => r.Category == category);
-            if (status is not null) query = query.Where(r => r.Status == status);
-
             // Life-threatening first, then untouched (Active) before handled ones, then newest.
-            return await query
+            return await db.DisasterReports.AsNoTracking()
+                .Where(r => OpenStatuses.Contains(r.Status))
                 .OrderByDescending(r => EF.Property<int>(r, "PriorityRank"))
                 .ThenBy(r => r.Status == ReportStatus.Active ? 0 : 1)
                 .ThenByDescending(r => r.CreatedAtUtc)
@@ -62,13 +61,6 @@ namespace Frontend_MarikinaAlert.Repositories
                 .OrderByDescending(r => r.UpdatedAtUtc ?? r.CreatedAtUtc)
                 .Take(take)
                 .ToListAsync();
-        }
-
-        public Task<int> CountOpenAsync(ReportPriority? priority = null)
-        {
-            var query = db.DisasterReports.Where(r => OpenStatuses.Contains(r.Status));
-            if (priority is not null) query = query.Where(r => r.Priority == priority);
-            return query.CountAsync();
         }
     }
 }

@@ -22,10 +22,15 @@
             <dt class="text-xs text-muted">Open</dt>
             <dd id="open-count" class="text-xl font-bold tabular-nums leading-tight">@Model.OpenCount</dd>
         </div>
+        <div class="px-4 py-2" title="New reports not handled within 5 min (Critical) or 10 min (High)">
+            <dt class="text-xs text-muted">Overdue</dt>
+            <dd id="overdue-count" class="text-xl font-bold tabular-nums leading-tight @(Model.OverdueIds.Count > 0 ? "text-danger" : "")">@Model.OverdueIds.Count</dd>
+        </div>
     </dl>
 </div>
 
 <form id="filters" asp-action="Dashboard" method="get" class="mt-6 mb-4 flex flex-wrap items-end gap-3">
+    <input type="hidden" name="barangay" value="@Model.Barangay" />
     <label class="text-sm font-semibold">
         <span class="block mb-1">Category</span>
         <select name="category" class="field !min-h-0 !py-2 w-44 text-[15px]">
@@ -49,8 +54,8 @@
     <a asp-action="Dashboard" class="text-sm font-semibold text-primary hover:underline underline-offset-4 pb-2.5">Clear filters</a>
 
     <button type="button" id="sound-toggle" aria-pressed="false"
-            class="ml-auto inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-muted hover:text-ink">
-        <i class="ph ph-speaker-slash text-base" aria-hidden="true"></i><span>Sound alerts off</span>
+            class="ml-auto rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-muted hover:text-ink">
+        <span>Sound alerts off</span>
     </button>
 </form>
 
@@ -67,7 +72,7 @@
                 <h2 class="text-lg font-bold">Relay to agency</h2>
                 <p class="text-sm text-muted mt-0.5">Send these details by radio or phone, then mark it as relayed.</p>
             </div>
-            <button type="button" data-close class="w-9 h-9 -mr-2 grid place-items-center rounded-md hover:bg-black/5 text-muted" aria-label="Close"><i class="ph ph-x text-xl" aria-hidden="true"></i></button>
+            <button type="button" data-close class="-mr-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-muted hover:bg-black/5 hover:text-ink">Close</button>
         </div>
 
         <div class="px-6 py-5 space-y-4">

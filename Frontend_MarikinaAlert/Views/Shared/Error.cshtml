@@ -1,16 +1,17 @@
 @model ErrorViewModel
+@inject IStringLocalizer<Translations> T
 @{
     var notFound = Model.StatusCode == 404;
-    ViewData["Title"] = notFound ? "Page not found" : "Something went wrong";
+    ViewData["Title"] = (notFound ? T["Page not found"] : T["Something went wrong"]).Value;
 }
 
 <h1 class="text-[1.75rem] font-bold tracking-tight">@ViewData["Title"]</h1>
 <p class="text-muted mt-2 max-w-prose">
-    @(notFound ? "We couldn't find that page." : "The system hit a problem while handling your request.")
-    If this is an emergency, use the report form or call <a href="tel:161" class="font-semibold text-primary underline">Rescue 161</a>.
+    @(notFound ? T["We couldn't find that page."] : T["The system hit a problem while handling your request."])
+    @Html.Raw(T["If this is an emergency, use the report form or call {0}.", "<a href=\"tel:161\" class=\"font-semibold text-primary underline\">Rescue 161</a>"].Value)
 </p>
-<a asp-controller="Reports" asp-action="Create" class="mt-7 inline-flex items-center gap-2 rounded-md bg-danger hover:bg-[#B71F1F] text-white font-bold px-5 py-3.5">
-    <i class="ph-fill ph-siren text-xl" aria-hidden="true"></i> Report an emergency
+<a asp-controller="Reports" asp-action="Create" class="mt-7 inline-block rounded-md bg-danger hover:bg-[#B71F1F] text-white font-bold px-5 py-3.5">
+    @T["Report an emergency"]
 </a>
 @if (Model.ShowRequestId && !notFound)
 {

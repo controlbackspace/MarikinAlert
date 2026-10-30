@@ -1,0 +1,89 @@
+@model ReportStatusViewModel
+@inject IStringLocalizer<Translations> T
+@{
+    ViewData["Title"] = T["Check my report"].Value;
+    var r = Model.Report;
+
+    // Steps the resident sees, in order. Dismissed reports get their own message instead.
+    var steps = r is null ? Array.Empty<(string Title, string Detail, bool Done)>() : new[]
+    {
+        (Title: T["Received"].Value, Detail: T["Your report is in the dispatchers' queue."].Value, Done: true),
+        (Title: T["Verified by a dispatcher"].Value, Detail: T["A dispatcher confirmed your report."].Value, Done: r.IsVerified),
+        (Title: T["Help requested"].Value, Detail: r.RelayedTo is null ? "" : T["Your report was sent to {0}.", r.RelayedTo].Value, Done: r.RelayedTo is not null),
+        (Title: T["Resolved"].Value, Detail: T["Dispatchers marked this incident as handled."].Value, Done: r.Status == ReportStatus.Resolved)
+    };
+}
+
+<h1 class="text-[1.75rem] font-bold tracking-tight leading-tight">@T["Check my report"]</h1>
+
+@if (r is null)
+{
+    <p class="text-muted mt-2">@T["Enter the tracking code from your confirmation page."]</p>
+
+    <form asp-action="Status" method="get" class="mt-6">
+        <label for="code" class="block font-semibold mb-1.5">@T["Tracking code"]</label>
+        <div class="flex gap-2">
+            <input id="code" name="code" value="@Model.Code" class="field font-mono uppercase tracking-wider" placeholder="ABCD-2345"
+                   autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" required />
+            <button class="shrink-0 rounded-md bg-primary hover:bg-primary-dark text-white font-semibold px-5">@T["Check status"]</button>
+        </div>
+        @if (Model.NotFound)
+        {
+            <p class="field-validation-error" role="alert">@T["We couldn't find a report with that code. Check the code and try again."]</p>
+        }
+    </form>
+
+    @* Filled in by site.js from reports this phone has sent. *@
+    <section id="my-reports" hidden class="mt-10">
+        <h2 class="font-bold">@T["Reports sent from this phone"]</h2>
+        <ul class="mt-3 border-y border-line divide-y divide-line"></ul>
+    </section>
+}
+else
+{
+    <div class="mt-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p class="font-mono text-lg tracking-wider">@r.TrackingCodeDisplay</p>
+        <p class="text-sm text-muted">MA-@r.Id.ToString("D5")</p>
+    </div>
+    <p class="mt-1 font-semibold">@r.LocationText</p>
+    <div class="mt-2"><partial name="_PriorityBadge" model="r" /></div>
+
+    @if (r.Status == ReportStatus.Dismissed)
+    {
+        <section class="mt-7 border-l-4 border-muted bg-surface px-5 py-4">
+            <h2 class="font-bold">@T["Closed without a response"]</h2>
+            <p class="mt-1">@T["A dispatcher marked this report as not needing a response. If you still need help, send a new report or call 161."]</p>
+        </section>
+    }
+    else
+    {
+        <ol class="mt-7 relative">
+            @for (var i = 0; i < steps.Length; i++)
+            {
+                var step = steps[i];
+                var last = i == steps.Length - 1;
+                <li class="relative pl-9 @(last ? "" : "pb-6")">
+                    @if (!last)
+                    {
+                        <span class="absolute left-[11px] top-6 bottom-0 w-0.5 @(steps[i + 1].Done ? "bg-success" : "bg-line")" aria-hidden="true"></span>
+                    }
+                    <span class="absolute left-0 top-0.5 w-6 h-6 rounded-full border-2 @(step.Done ? "bg-success border-success" : "bg-white border-line")" aria-hidden="true"></span>
+                    <p class="font-semibold @(step.Done ? "" : "text-muted")">@step.Title</p>
+                    @if (step.Done && step.Detail != "")
+                    {
+                        <p class="text-sm text-muted mt-0.5">@step.Detail</p>
+                    }
+                </li>
+            }
+        </ol>
+    }
+
+    <p class="text-sm text-muted mt-7">
+        @T["Last updated {0}", Marikina.ToLocal(r.UpdatedAtUtc ?? r.CreatedAtUtc).ToString("MMM d, h:mm tt")]
+    </p>
+    <a asp-action="Status" class="mt-6 inline-block font-semibold text-primary hover:underline underline-offset-4">@T["Check another code"]</a>
+}
+
+@section Scripts {
+    <script src="~/js/site.js" asp-append-version="true"></script>
+}

@@ -61,9 +61,11 @@
     // ---------- live feed ----------
 
     let refreshing = false;
+    let refreshAgain = false;
     let lastSignature = null;
     async function refresh() {
-        if (refreshing) return;
+        // A filter change during a poll must not be dropped: run once more when the current poll ends.
+        if (refreshing) { refreshAgain = true; return; }
         refreshing = true;
         try {
             const res = await fetch(feedUrl().feed, { headers: { 'X-Requested-With': 'fetch' }, cache: 'no-store' });
@@ -96,6 +98,9 @@
             if (data) {
                 document.getElementById('critical-count').textContent = data.dataset.critical;
                 document.getElementById('open-count').textContent = data.dataset.open;
+                const overdue = document.getElementById('overdue-count');
+                overdue.textContent = data.dataset.overdue;
+                overdue.classList.toggle('text-danger', data.dataset.overdue > 0);
                 document.title = (data.dataset.critical > 0 ? `(${data.dataset.critical}) ` : '') + baseTitle;
             }
             setOnline(true);
@@ -103,6 +108,7 @@
             setOnline(false);
         } finally {
             refreshing = false;
+            if (refreshAgain) { refreshAgain = false; refresh(); }
         }
     }
 
@@ -117,10 +123,17 @@
         refresh().then(() => { knownIds = currentIds(); });
     });
 
+    // Barangay list: click a barangay to show only its reports; "Show all" clears it.
+    feed.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-barangay]');
+        if (!btn) return;
+        filters.elements.barangay.value = btn.dataset.barangay;
+        filters.dispatchEvent(new Event('change'));
+    });
+
     document.getElementById('sound-toggle').addEventListener('click', function () {
         soundOn = !soundOn;
         this.setAttribute('aria-pressed', soundOn);
-        this.querySelector('i').className = 'ph text-base ' + (soundOn ? 'ph-speaker-high' : 'ph-speaker-slash');
         this.querySelector('span').textContent = soundOn ? 'Sound alerts on' : 'Sound alerts off';
         this.classList.toggle('text-primary', soundOn);
         this.classList.toggle('border-primary', soundOn);
