@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# MarikinAlert local SQLite database
+App_Data/
+*.db
+*.db-shm
+*.db-wal

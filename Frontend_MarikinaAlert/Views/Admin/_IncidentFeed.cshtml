@@ -1,0 +1,18 @@
+@model IncidentFeedViewModel
+<div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" class="space-y-4">
+    @if (Model.Reports.Count == 0)
+    {
+        <div class="rounded-xl border border-dashed border-white/15 bg-panel/60 p-10 text-center">
+            <i class="ph ph-check-circle text-4xl text-emerald-400" aria-hidden="true"></i>
+            <p class="mt-3 font-bold">@(Model.Category is null && Model.Status is null ? "No active incidents" : "No incidents match these filters")</p>
+            <p class="text-sm text-slate-400 mt-1">New reports will appear here automatically.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var report in Model.Reports)
+        {
+            <partial name="_IncidentCard" model="report" />
+        }
+    }
+</div>

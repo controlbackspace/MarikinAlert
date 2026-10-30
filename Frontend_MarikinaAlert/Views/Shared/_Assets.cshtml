@@ -1,0 +1,24 @@
+@* Shared <head> assets. Everything is served from wwwroot so the app works on the offline intranet. *@
+<link rel="stylesheet" href="~/lib/phosphor/regular/style.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/lib/phosphor/fill/style.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+<script src="~/lib/tailwind/tailwind.js"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+                colors: { ink: '#020617', panel: '#0f172a' },
+                keyframes: {
+                    'fade-in-up': { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'none' } },
+                    'flash': { '0%': { backgroundColor: 'rgba(16,185,129,.18)' }, '100%': { backgroundColor: 'transparent' } }
+                },
+                animation: {
+                    'fade-in-up': 'fade-in-up .35s ease-out both',
+                    'flash': 'flash 2.5s ease-out'
+                }
+            }
+        }
+    };
+</script>
