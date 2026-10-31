@@ -13,6 +13,9 @@ namespace Frontend_MarikinaAlert.Data
             AddColumnIfMissing(db, "DisasterReports", "TrackingCode", "TEXT NULL");
             AddColumnIfMissing(db, "DisasterReports", "Source", "TEXT NOT NULL DEFAULT 'App'");
             AddColumnIfMissing(db, "DisasterReports", "LoggedBy", "TEXT NULL");
+            AddColumnIfMissing(db, "DisasterReports", "ClientRequestId", "TEXT NULL");
+            db.Database.ExecuteSqlRaw(
+                "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_DisasterReports_ClientRequestId\" ON \"DisasterReports\" (\"ClientRequestId\");");
             db.Database.ExecuteSqlRaw(
                 "CREATE INDEX IF NOT EXISTS \"IX_DisasterReports_TrackingCode\" ON \"DisasterReports\" (\"TrackingCode\");");
 

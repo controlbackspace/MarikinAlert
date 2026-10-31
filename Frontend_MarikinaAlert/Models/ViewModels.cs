@@ -29,6 +29,9 @@ namespace Frontend_MarikinaAlert.Models
 
         // Optional quick-pick from the chips; triage keywords take precedence.
         public ReportCategory? SelectedCategory { get; set; }
+
+        // Set by site.js; not validated here because a bad value just means no duplicate protection.
+        public string? ClientRequestId { get; set; }
     }
 
     // Dispatcher's "New report" form: the resident form plus how the report came in.

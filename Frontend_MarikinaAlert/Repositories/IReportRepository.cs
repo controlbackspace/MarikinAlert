@@ -7,6 +7,7 @@ namespace Frontend_MarikinaAlert.Repositories
         Task<DisasterReport> AddAsync(DisasterReport report);
         Task<DisasterReport?> GetByIdAsync(int id);
         Task<DisasterReport?> GetByTrackingCodeAsync(string code);
+        Task<DisasterReport?> GetByClientRequestIdAsync(string clientRequestId);
         Task UpdateAsync(DisasterReport report);
 
         /// <summary>Active, Verified and Relayed reports, most urgent first.</summary>

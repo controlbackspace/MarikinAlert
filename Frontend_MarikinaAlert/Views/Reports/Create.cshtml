@@ -20,11 +20,11 @@
 </p>
 
 <form asp-action="Create" method="post" id="report-form" class="mt-8 space-y-9" novalidate
-      data-msg-send="@T["Send emergency report"]" data-msg-sending="@T["Sending…"]" data-msg-retry="@T["Try again"]"
-      data-msg-network="@T["Check that you're still connected to the Wi-Fi. Your message is saved on this phone."]"
-      data-msg-server="@T["The system had a problem. Reload the page and send again. Your message is saved on this phone."]">
+      data-msg-send="@T["Send emergency report"]" data-msg-sending="@T["Sending…"]" data-msg-retry="@T["Send now"]">
 
     <div asp-validation-summary="ModelOnly" class="text-danger text-sm font-semibold"></div>
+    @* Filled in by site.js. Lets the server spot a report that is sent twice. *@
+    <input type="hidden" asp-for="ClientRequestId" />
 
     @* What *@
     <fieldset>
@@ -107,7 +107,12 @@
     <div class="sticky bottom-0 z-10 -mx-4 px-4 pt-3 bg-white/95 backdrop-blur border-t border-line" style="padding-bottom: max(.75rem, env(safe-area-inset-bottom))">
         <div id="send-error" role="alert" hidden class="mb-3 border-l-4 border-danger bg-danger/5 px-3 py-2.5 text-sm">
             <p class="font-bold text-danger">@T["Couldn't send your report."]</p>
-            <p id="send-error-detail" class="text-ink mt-0.5"></p>
+            <p class="text-ink mt-0.5">@T["It's saved on this phone and will send by itself once you're connected again. Keep this page open."]</p>
+            <p class="text-ink mt-1.5 font-semibold">
+                @Html.Raw(T["If someone is in danger right now, call {0} or {1}.",
+                    "<a href=\"tel:161\" class=\"text-primary underline underline-offset-2\">161</a>",
+                    "<a href=\"tel:911\" class=\"text-primary underline underline-offset-2\">911</a>"].Value)
+            </p>
         </div>
         <button type="submit" id="submit-btn"
                 class="w-full flex items-center justify-center bg-danger hover:bg-[#B71F1F] text-white font-bold text-lg py-4 rounded-md transition active:translate-y-px disabled:opacity-70 disabled:cursor-wait">

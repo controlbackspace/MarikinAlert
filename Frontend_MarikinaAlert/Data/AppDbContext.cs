@@ -26,6 +26,7 @@ namespace Frontend_MarikinaAlert.Data
             report.HasIndex(r => r.Status);
             report.HasIndex(r => r.CreatedAtUtc);
             report.HasIndex(r => r.TrackingCode);
+            report.HasIndex(r => r.ClientRequestId).IsUnique();
 
             modelBuilder.Entity<Agency>().HasIndex(a => a.Name).IsUnique();
 
