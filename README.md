@@ -36,7 +36,7 @@ Residents connect to a local public Wi-Fi node and send an emergency report in p
 
 ## Demo
 
-Screenshots use sample data: the names, phone numbers and teams are made up.
+Screenshots use sample data:
 
 ### Resident (phone)
 
