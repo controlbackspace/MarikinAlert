@@ -114,7 +114,7 @@ const sender = (function () {
     const counter = document.getElementById('msg-count');
     const button = document.getElementById('submit-btn');
     const label = button.querySelector('span');
-    const sendError = document.getElementById('send-error');
+    const queuedNotice = document.getElementById('send-queued');
     const draftNotice = document.getElementById('draft-notice');
 
     function updateCount() {
@@ -156,7 +156,7 @@ const sender = (function () {
         store.remove(DRAFT_KEY);
         form.reset();
         requestId.value = newRequestId(); // a report already waiting in the outbox still gets sent
-        sendError.hidden = true;
+        queuedNotice.hidden = true;
         setSending(false);
         restoreBarangay();
         updateCount();
@@ -194,7 +194,7 @@ const sender = (function () {
     }
 
     function showQueued() {
-        sendError.hidden = false;
+        queuedNotice.hidden = false;
         label.textContent = text.msgRetry;
         button.disabled = false;
     }
@@ -207,7 +207,7 @@ const sender = (function () {
         if (button.disabled) return;
 
         saveDraft();
-        sendError.hidden = true;
+        queuedNotice.hidden = true;
         setSending(true);
 
         let res;
@@ -238,7 +238,7 @@ const sender = (function () {
     });
 
     // Coming back with the browser's Back button: re-enable the form.
-    window.addEventListener('pageshow', () => { if (sendError.hidden) setSending(false); });
+    window.addEventListener('pageshow', () => { if (queuedNotice.hidden) setSending(false); });
 
     if (!restoreDraft()) restoreBarangay();
     if (!requestId.value) requestId.value = newRequestId();
