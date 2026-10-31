@@ -176,14 +176,96 @@
     const summary = document.getElementById('relay-summary');
     const copyBtn = document.getElementById('copy-summary');
 
+    const callHotline = document.getElementById('call-hotline');
+    const callBackup = document.getElementById('call-backup');
+    const radio = document.getElementById('relay-radio');
+    const noContact = document.getElementById('relay-no-contact');
+    const numbers = document.getElementById('relay-numbers');
+    const logButtons = document.getElementById('relay-log');
+    let lastDialed = null; // number the dispatcher last tapped, logged with the outcome
+
+    function telHref(number) {
+        return 'tel:' + number.replace(/[^\d+]/g, '');
+    }
+
+    function setNumber(link, number) {
+        link.hidden = !number;
+        link.href = number ? telHref(number) : '';
+        link.dataset.number = number || '';
+        link.querySelector('span').textContent = number || '';
+        link.classList.remove('ring-4', 'ring-[#05795B]/30');
+    }
+
+    // Show the numbers and radio channel of the agency picked in the dialog.
+    function showContact() {
+        const option = relayForm.elements.agency.selectedOptions[0];
+        const hotline = option?.dataset.hotline || '';
+        const backup = option?.dataset.backup || '';
+        const channel = option?.dataset.radio || '';
+        setNumber(callHotline, hotline);
+        setNumber(callBackup, backup);
+        radio.hidden = !channel;
+        radio.querySelector('strong').textContent = channel;
+        noContact.hidden = !!(hotline || channel);
+        numbers.hidden = !(hotline || channel);
+        logButtons.hidden = !(hotline || channel);
+        logButtons.querySelectorAll('[data-method="Phone"]').forEach(b => b.hidden = !hotline);
+        logButtons.querySelector('[data-method="Radio"]').hidden = !channel;
+        lastDialed = hotline || null;
+    }
+
+    function openRelay(id, agency, text, dialed) {
+        relayForm.elements.id.value = id;
+        relayForm.elements.agency.value = agency;
+        summary.value = text;
+        copyBtn.querySelector('span').textContent = 'Copy details';
+        showContact();
+        if (dialed) lastDialed = dialed;
+        dialog.showModal();
+    }
+
     feed.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-relay]');
+        if (btn) openRelay(btn.dataset.relay, btn.dataset.agency, btn.dataset.summary);
+
+        // "Call" on a card: let the tel: link dial, and open the dialog so the result can be logged.
+        const call = e.target.closest('[data-call]');
+        if (call) openRelay(call.dataset.call, call.dataset.agency, call.dataset.summary, call.dataset.number);
+    });
+
+    relayForm.elements.agency.addEventListener('change', showContact);
+    dialog.querySelectorAll('[data-dial]').forEach(link =>
+        link.addEventListener('click', () => { lastDialed = link.dataset.number; }));
+
+    logButtons.addEventListener('click', async function (e) {
+        const btn = e.target.closest('[data-outcome]');
         if (!btn) return;
-        relayForm.elements.id.value = btn.dataset.relay;
-        relayForm.elements.agency.value = btn.dataset.agency;
-        summary.value = btn.dataset.summary;
-        copyBtn.querySelector('span').textContent = 'Copy details';
-        dialog.showModal();
+        const body = new FormData();
+        body.append('__RequestVerificationToken', relayForm.elements.__RequestVerificationToken.value);
+        body.append('id', relayForm.elements.id.value);
+        body.append('agency', relayForm.elements.agency.value);
+        body.append('method', btn.dataset.method);
+        body.append('outcome', btn.dataset.outcome);
+        if (btn.dataset.method === 'Phone' && lastDialed) body.append('number', lastDialed);
+
+        btn.disabled = true;
+        try {
+            const res = await fetch('/Admin/LogContact/' + relayForm.elements.id.value, {
+                method: 'POST', body, headers: { 'X-Requested-With': 'fetch' }
+            });
+            if (!res.ok) throw new Error(res.status);
+
+            const failed = btn.dataset.outcome !== 'Answered';
+            const tryBackup = failed && btn.dataset.method === 'Phone' && callBackup.dataset.number
+                && lastDialed !== callBackup.dataset.number;
+            if (tryBackup) callBackup.classList.add('ring-4', 'ring-[#05795B]/30');
+            toast(tryBackup ? 'Logged. Try the backup number.' : failed ? 'Logged. Try again or use the radio.' : 'Logged. Mark it as relayed once the details are sent.');
+            refresh();
+        } catch {
+            toast('Could not save. Check the connection and try again.', true);
+        } finally {
+            btn.disabled = false;
+        }
     });
 
     dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());

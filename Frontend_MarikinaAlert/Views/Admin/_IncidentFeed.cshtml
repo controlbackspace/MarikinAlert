@@ -65,10 +65,14 @@
         {
             @foreach (var report in Model.Reports)
             {
+                // Call whoever it was relayed to; before that, the agency triage suggests.
+                var agencyName = report.RelayedTo ?? Marikina.SuggestedAgency(report.Category);
                 var hints = new ViewDataDictionary(ViewData)
                 {
                     ["Overdue"] = Model.OverdueIds.Contains(report.Id),
-                    ["DuplicateOf"] = Model.DuplicateOf.TryGetValue(report.Id, out var originalId) ? originalId : (int?)null
+                    ["DuplicateOf"] = Model.DuplicateOf.TryGetValue(report.Id, out var originalId) ? originalId : (int?)null,
+                    ["Agency"] = Model.Agencies.GetValueOrDefault(agencyName),
+                    ["Contacts"] = Model.Contacts[report.Id].ToList()
                 };
                 <partial name="_IncidentCard" model="report" view-data="hints" />
             }

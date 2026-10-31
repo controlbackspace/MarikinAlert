@@ -13,7 +13,7 @@ namespace Frontend_MarikinaAlert.Controllers
 {
     // Dispatcher / Incident Triage Officer pages.
     [Authorize]
-    public class AdminController(IReportRepository reports, IDisasterTriageService triage, IConfiguration config) : Controller
+    public class AdminController(IReportRepository reports, IAgencyRepository agencies, IDisasterTriageService triage, IConfiguration config) : Controller
     {
         // ---------- Login ----------
 
@@ -80,6 +80,9 @@ namespace Frontend_MarikinaAlert.Controllers
             var now = DateTime.UtcNow;
             var overdue = open.Where(r => IncidentInsights.IsOverdue(r, now)).Select(r => r.Id).ToHashSet();
             barangay = string.IsNullOrWhiteSpace(barangay) ? null : barangay;
+            var contacts = await reports.GetContactsAsync(open.Select(r => r.Id).ToList());
+            var directory = (await agencies.GetAllAsync()).Where(a => a.IsActive)
+                .ToDictionary(a => a.Name, StringComparer.OrdinalIgnoreCase);
 
             return new IncidentFeedViewModel
             {
@@ -99,7 +102,9 @@ namespace Frontend_MarikinaAlert.Controllers
                     .GroupBy(r => r.Barangay)
                     .Select(g => new BarangayCount(g.Key, g.Count(), g.Count(r => r.Priority == ReportPriority.Critical), g.Count(r => overdue.Contains(r.Id))))
                     .OrderByDescending(b => b.Critical).ThenByDescending(b => b.Open).ThenBy(b => b.Barangay)
-                    .ToList()
+                    .ToList(),
+                Agencies = directory,
+                Contacts = contacts.ToLookup(c => c.ReportId)
             };
         }
 
@@ -160,6 +165,29 @@ namespace Frontend_MarikinaAlert.Controllers
             r.Status = ReportStatus.Relayed;
         });
 
+        // Records one call or radio attempt to an agency. The call itself happens on the dispatcher's phone or radio.
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> LogContact(int id, string? agency, string? number, ContactMethod method, ContactOutcome outcome)
+        {
+            // An unknown enum value binds as the default (Phone / Answered) with a ModelState error, so check both.
+            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(agency) || !Enum.IsDefined(method) || !Enum.IsDefined(outcome))
+                return BadRequest();
+            if (await reports.GetByIdAsync(id) is null) return NotFound();
+
+            await reports.AddContactAsync(new ContactAttempt
+            {
+                ReportId = id,
+                AgencyName = Truncate(agency.Trim(), 100),
+                Number = method == ContactMethod.Phone && Clean(number) is string n ? Truncate(n, 30) : null,
+                Method = method,
+                Outcome = outcome,
+                LoggedBy = User.Identity?.Name
+            });
+
+            if (Request.Headers.ContainsKey("X-Requested-With")) return NoContent();
+            return RedirectToAction(nameof(Dashboard));
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         public Task<IActionResult> Resolve(int id) => ChangeAsync(id, r => r.Status = ReportStatus.Resolved);
 
@@ -195,7 +223,56 @@ namespace Frontend_MarikinaAlert.Controllers
             Search = q
         });
 
+        // ---------- Agency directory ----------
+
+        [HttpGet]
+        public async Task<IActionResult> Agencies() =>
+            View(new AgenciesViewModel { Agencies = await agencies.GetAllAsync() });
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveAgency(Agency model)
+        {
+            model.Name = model.Name?.Trim() ?? "";
+            model.Hotline = Clean(model.Hotline);
+            model.BackupNumber = Clean(model.BackupNumber);
+            model.RadioChannel = Clean(model.RadioChannel);
+            model.Notes = Clean(model.Notes);
+            model.NumberSource = Clean(model.NumberSource);
+
+            var all = await agencies.GetAllAsync();
+            if (all.Any(a => a.Id != model.Id && string.Equals(a.Name, model.Name, StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(Agency.Name), "Another agency already has this name.");
+            if (model.Hotline is null && model.BackupNumber is not null)
+                ModelState.AddModelError(nameof(Agency.Hotline), "Enter the main hotline before a backup number.");
+
+            if (!ModelState.IsValid)
+                return View(nameof(Agencies), new AgenciesViewModel { Agencies = all, Invalid = model });
+
+            if (model.Id == 0)
+            {
+                await agencies.AddAsync(model);
+            }
+            else
+            {
+                var existing = await agencies.GetByIdAsync(model.Id);
+                if (existing is null) return NotFound();
+                existing.Name = model.Name;
+                existing.Hotline = model.Hotline;
+                existing.BackupNumber = model.BackupNumber;
+                existing.RadioChannel = model.RadioChannel;
+                existing.Notes = model.Notes;
+                existing.NumberSource = model.NumberSource;
+                existing.IsActive = model.IsActive;
+                await agencies.UpdateAsync(existing);
+            }
+
+            TempData["SavedAgency"] = model.Name;
+            return RedirectToAction(nameof(Agencies));
+        }
+
         private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static string Truncate(string value, int max) => value.Length <= max ? value : value[..max];
 
         private static bool FixedTimeEquals(string a, string b) =>
             CryptographicOperations.FixedTimeEquals(

@@ -1,0 +1,92 @@
+@model AgenciesViewModel
+@{
+    ViewData["Title"] = "Agencies";
+    Layout = "_AdminLayout";
+
+    // Which report types the dashboard suggests each agency for. Renaming an agency drops its suggestions.
+    string? SuggestedFor(string name)
+    {
+        var categories = Enum.GetValues<ReportCategory>().Where(c => Marikina.SuggestedAgency(c) == name).ToList();
+        return categories.Count == 0 ? null : string.Join(", ", categories);
+    }
+
+    var adding = Model.Invalid is { Id: 0 } ? Model.Invalid : new Agency();
+}
+
+<h1 class="text-2xl font-bold tracking-tight">Agencies</h1>
+<p class="text-sm text-muted mt-1 max-w-2xl">
+    Hotlines and radio channels used by the Call button on live incidents.
+    Only save numbers from an official source, and write down where you got each one.
+</p>
+
+@if (TempData["SavedAgency"] is string saved)
+{
+    <p class="mt-5 border-l-4 border-success bg-white border border-line rounded-md px-5 py-3 font-semibold" role="status">Saved @saved.</p>
+}
+
+@{
+    async Task AgencyForm(Agency a)
+    {
+        var showErrors = Model.Invalid is not null && Model.Invalid.Id == a.Id;
+        var prefix = a.Id == 0 ? "new" : $"a{a.Id}";
+        var suggested = a.Id == 0 ? null : SuggestedFor(a.Name);
+
+        <form asp-action="SaveAgency" method="post" class="bg-white border border-line rounded-md @(a.IsActive ? "" : "opacity-70")">
+            <input type="hidden" name="Id" value="@a.Id" />
+            <div class="px-5 pt-4 pb-5 grid gap-4 sm:grid-cols-2">
+                <label class="block sm:col-span-2">
+                    <span class="block font-semibold mb-1.5">Agency name</span>
+                    <input id="@prefix-name" name="Name" value="@a.Name" maxlength="100" required class="field" />
+                    @if (showErrors) { @Html.ValidationMessage("Name") }
+                    @if (suggested is not null)
+                    {
+                        <span class="block mt-1 text-sm text-muted">Suggested for @suggested reports. Keep this name for the suggestion to work.</span>
+                    }
+                </label>
+                <label class="block">
+                    <span class="block font-semibold mb-1.5">Hotline</span>
+                    <input id="@prefix-hotline" name="Hotline" value="@a.Hotline" maxlength="30" inputmode="tel" class="field font-mono" />
+                    @if (showErrors) { @Html.ValidationMessage("Hotline") }
+                </label>
+                <label class="block">
+                    <span class="block font-semibold mb-1.5">Backup number <span class="font-normal text-muted">(optional)</span></span>
+                    <input id="@prefix-backup" name="BackupNumber" value="@a.BackupNumber" maxlength="30" inputmode="tel" class="field font-mono" />
+                    @if (showErrors) { @Html.ValidationMessage("BackupNumber") }
+                </label>
+                <label class="block">
+                    <span class="block font-semibold mb-1.5">Radio channel <span class="font-normal text-muted">(optional)</span></span>
+                    <input id="@prefix-radio" name="RadioChannel" value="@a.RadioChannel" maxlength="40" placeholder="e.g. Ch. 5 / call sign" class="field" />
+                </label>
+                <label class="block">
+                    <span class="block font-semibold mb-1.5">Where the number came from</span>
+                    <input id="@prefix-source" name="NumberSource" value="@a.NumberSource" maxlength="200" placeholder="e.g. City website, Oct 2026" class="field" />
+                </label>
+                <label class="block sm:col-span-2">
+                    <span class="block font-semibold mb-1.5">Notes <span class="font-normal text-muted">(optional)</span></span>
+                    <input id="@prefix-notes" name="Notes" value="@a.Notes" maxlength="200" placeholder="Station address, hours, what they respond to" class="field" />
+                </label>
+            </div>
+            <div class="px-5 py-3 border-t border-line bg-surface/60 flex flex-wrap items-center justify-between gap-3 rounded-b-md">
+                @* Checkbox first: model binding takes the first "IsActive" value, the hidden one is the fallback. *@
+                <label class="flex items-center gap-2 text-sm font-semibold">
+                    <input type="checkbox" name="IsActive" value="true" checked="@a.IsActive" class="w-4 h-4 accent-[#0032a0]" />
+                    Show in relay list
+                </label>
+                <input type="hidden" name="IsActive" value="false" />
+                <button class="rounded-md bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-4 py-2 transition active:translate-y-px">
+                    @(a.Id == 0 ? "Add agency" : "Save")
+                </button>
+            </div>
+        </form>
+    }
+}
+
+<div class="mt-6 space-y-4">
+    @foreach (var agency in Model.Agencies)
+    {
+        await AgencyForm(Model.Invalid is not null && Model.Invalid.Id == agency.Id ? Model.Invalid : agency);
+    }
+</div>
+
+<h2 class="mt-10 mb-3 text-lg font-bold">Add an agency</h2>
+@{ await AgencyForm(adding); }
