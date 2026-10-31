@@ -6,6 +6,8 @@ namespace Frontend_MarikinaAlert.Data
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
         public DbSet<DisasterReport> DisasterReports => Set<DisasterReport>();
+        public DbSet<Agency> Agencies => Set<Agency>();
+        public DbSet<ContactAttempt> ContactAttempts => Set<ContactAttempt>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,6 +25,14 @@ namespace Frontend_MarikinaAlert.Data
             report.HasIndex(r => r.Status);
             report.HasIndex(r => r.CreatedAtUtc);
             report.HasIndex(r => r.TrackingCode);
+
+            modelBuilder.Entity<Agency>().HasIndex(a => a.Name).IsUnique();
+
+            var contact = modelBuilder.Entity<ContactAttempt>();
+            contact.Property(c => c.Method).HasConversion<string>().HasMaxLength(20);
+            contact.Property(c => c.Outcome).HasConversion<string>().HasMaxLength(20);
+            contact.HasOne<DisasterReport>().WithMany().HasForeignKey(c => c.ReportId).OnDelete(DeleteBehavior.Cascade);
+            contact.HasIndex(c => c.ReportId);
         }
 
         public override int SaveChanges()

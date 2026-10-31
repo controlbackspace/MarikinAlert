@@ -81,7 +81,7 @@
         <div class="px-6 pt-5 pb-4 border-b border-line flex items-start justify-between gap-4">
             <div>
                 <h2 class="text-lg font-bold">Relay to agency</h2>
-                <p class="text-sm text-muted mt-0.5">Send these details by radio or phone, then mark it as relayed.</p>
+                <p class="text-sm text-muted mt-0.5">Call or radio the agency, log how it went, then mark it as relayed.</p>
             </div>
             <button type="button" data-close class="-mr-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-muted hover:bg-black/5 hover:text-ink">Close</button>
         </div>
@@ -90,12 +90,38 @@
             <label class="block">
                 <span class="block font-semibold mb-1.5">Agency</span>
                 <select name="agency" class="field">
-                    @foreach (var agency in Marikina.Agencies)
+                    @foreach (var agency in Model.Agencies.Values.OrderBy(a => a.SortOrder).ThenBy(a => a.Name))
                     {
-                        <option value="@agency">@agency</option>
+                        <option value="@agency.Name" data-hotline="@agency.Hotline" data-backup="@agency.BackupNumber" data-radio="@agency.RadioChannel">@agency.Name</option>
                     }
                 </select>
             </label>
+
+            @* Numbers come from the Agencies page. Calls go out on the dispatcher's own phone, which works without internet. *@
+            <div class="rounded-md border border-line p-4">
+                <p id="relay-no-contact" class="text-sm text-muted" hidden>
+                    No number or radio channel saved for this agency.
+                    <a asp-action="Agencies" class="font-semibold text-primary underline underline-offset-2">Add one on the Agencies page</a>.
+                </p>
+                <div id="relay-numbers" class="flex flex-wrap items-center gap-2">
+                    <a id="call-hotline" data-dial class="rounded-md bg-[#05795B] hover:bg-[#04634A] text-white font-semibold px-4 py-2.5 transition active:translate-y-px">
+                        Call <span class="font-mono font-medium"></span>
+                    </a>
+                    <a id="call-backup" data-dial class="rounded-md border border-[#05795B] text-[#05795B] hover:bg-[#05795B]/5 font-semibold px-4 py-[9px] transition active:translate-y-px">
+                        Backup <span class="font-mono font-medium"></span>
+                    </a>
+                    <span id="relay-radio" class="text-sm text-muted">Radio <strong class="text-ink"></strong></span>
+                </div>
+                <fieldset id="relay-log" class="mt-4">
+                    <legend class="text-sm font-semibold">Log the result</legend>
+                    <div class="mt-1.5 flex flex-wrap gap-2">
+                        <button type="button" data-method="Phone" data-outcome="Answered" class="rounded-md border border-line bg-white hover:border-success hover:text-success text-sm font-semibold px-3 py-1.5">Answered</button>
+                        <button type="button" data-method="Phone" data-outcome="NoAnswer" class="rounded-md border border-line bg-white hover:border-danger hover:text-danger text-sm font-semibold px-3 py-1.5">No answer</button>
+                        <button type="button" data-method="Phone" data-outcome="Busy" class="rounded-md border border-line bg-white hover:border-danger hover:text-danger text-sm font-semibold px-3 py-1.5">Busy / can't connect</button>
+                        <button type="button" data-method="Radio" data-outcome="Answered" class="rounded-md border border-line bg-white hover:border-success hover:text-success text-sm font-semibold px-3 py-1.5">Reached by radio</button>
+                    </div>
+                </fieldset>
+            </div>
 
             <label class="block">
                 <span class="block font-semibold mb-1.5">Details to relay</span>

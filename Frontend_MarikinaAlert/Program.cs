@@ -26,6 +26,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? $"Data Source={dbPath};Default Timeout=30"));
 
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IAgencyRepository, AgencyRepository>();
 builder.Services.AddSingleton<IDisasterTriageService, KeywordTriageService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

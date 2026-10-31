@@ -62,5 +62,21 @@ namespace Frontend_MarikinaAlert.Repositories
                 .Take(take)
                 .ToListAsync();
         }
+
+        public async Task AddContactAsync(ContactAttempt attempt)
+        {
+            attempt.AtUtc = DateTime.UtcNow;
+            db.ContactAttempts.Add(attempt);
+            await db.SaveChangesAsync();
+        }
+
+        public async Task<IReadOnlyList<ContactAttempt>> GetContactsAsync(IReadOnlyCollection<int> reportIds)
+        {
+            if (reportIds.Count == 0) return [];
+            return await db.ContactAttempts.AsNoTracking()
+                .Where(c => reportIds.Contains(c.ReportId))
+                .OrderBy(c => c.AtUtc)
+                .ToListAsync();
+        }
     }
 }

@@ -67,6 +67,20 @@ namespace Frontend_MarikinaAlert.Models
 
         // Open reports per barangay, busiest first. Always computed from all open reports, ignoring filters.
         public IReadOnlyList<BarangayCount> BarangaySummary { get; set; } = [];
+
+        // Active agencies by name, for the call button on each card.
+        public IReadOnlyDictionary<string, Agency> Agencies { get; set; } = new Dictionary<string, Agency>();
+
+        // Report id -> calls and radio attempts made for it, oldest first.
+        public ILookup<int, ContactAttempt> Contacts { get; set; } = Array.Empty<ContactAttempt>().ToLookup(c => c.ReportId);
+    }
+
+    public class AgenciesViewModel
+    {
+        public IReadOnlyList<Agency> Agencies { get; set; } = [];
+
+        // The agency whose form failed validation (Id 0 = the "Add agency" form), shown with its errors and typed values.
+        public Agency? Invalid { get; set; }
     }
 
     public record BarangayCount(string Barangay, int Open, int Critical, int Overdue);

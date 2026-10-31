@@ -14,5 +14,10 @@ namespace Frontend_MarikinaAlert.Repositories
 
         /// <summary>Resolved and Dismissed reports, newest first.</summary>
         Task<IReadOnlyList<DisasterReport>> GetClosedAsync(ReportStatus? status, string? search, int take = 200);
+
+        Task AddContactAsync(ContactAttempt attempt);
+
+        /// <summary>Call and radio attempts for the given reports, oldest first.</summary>
+        Task<IReadOnlyList<ContactAttempt>> GetContactsAsync(IReadOnlyCollection<int> reportIds);
     }
 }
