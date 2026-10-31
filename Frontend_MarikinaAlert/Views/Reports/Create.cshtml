@@ -105,10 +105,14 @@
 
     @* Stays pinned to the bottom of the screen while scrolling, so it's always one tap away. *@
     <div class="sticky bottom-0 z-10 -mx-4 px-4 pt-3 bg-white/95 backdrop-blur border-t border-line" style="padding-bottom: max(.75rem, env(safe-area-inset-bottom))">
-        <div id="send-error" role="alert" hidden class="mb-3 border-l-4 border-danger bg-danger/5 px-3 py-2.5 text-sm">
-            <p class="font-bold text-danger">@T["Couldn't send your report."]</p>
-            <p class="text-ink mt-0.5">@T["It's saved on this phone and will send by itself once you're connected again. Keep this page open."]</p>
-            <p class="text-ink mt-1.5 font-semibold">
+        @* No connection: the report waits in the phone's outbox. Not an error, but it must be clear dispatchers don't have it yet. *@
+        <div id="send-queued" role="status" hidden class="mb-3 border-l-4 border-accent bg-[#FFF3E0] px-3 py-2.5 text-sm">
+            <p class="font-bold text-ink flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent animate-pulse" aria-hidden="true"></span>
+                @T["Report saved on this phone"]
+            </p>
+            <p class="text-ink mt-0.5">@T["It will send by itself once you're connected. Dispatchers don't have it yet, so keep this page open."]</p>
+            <p class="text-ink mt-1.5">
                 @Html.Raw(T["If someone is in danger right now, call {0} or {1}.",
                     "<a href=\"tel:161\" class=\"text-primary underline underline-offset-2\">161</a>",
                     "<a href=\"tel:911\" class=\"text-primary underline underline-offset-2\">911</a>"].Value)

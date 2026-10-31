@@ -34,6 +34,33 @@ Residents connect to a local public Wi-Fi node and send an emergency report in p
 
 ---
 
+## Demo
+
+Screenshots use sample data: the names, phone numbers and teams are made up.
+
+### Resident (phone)
+
+| Report form | Confirmation | Check my report |
+|:---:|:---:|:---:|
+| <img src="imgs/screenshots/resident-form.png" width="250" alt="Report form with the Flood option picked and a Taglish message"> | <img src="imgs/screenshots/resident-confirmation.png" width="250" alt="Report received page with tracking code, reference number and safety tips"> | <img src="imgs/screenshots/resident-status.png" width="250" alt="Report status page showing received, verified and help requested steps"> |
+| Pick a type, describe it in Tagalog or English, choose the barangay. | Tracking code, how the report was sorted, and what to do while waiting. | Enter the tracking code to see whether help is on the way. |
+
+### Dispatcher (laptop)
+
+**Live incidents.** Critical reports first, a barangay map of open reports and teams, and team status on each report.
+
+<img src="imgs/screenshots/dashboard.png" alt="Dispatcher dashboard with incident cards, the schematic barangay map and the team list">
+
+| Relay and call an agency | Logging a phone or radio report |
+|:---:|:---:|
+| <img src="imgs/screenshots/relay-dialog.png" width="380" alt="Relay dialog with a Call 161 button, call result buttons and the report details"> | <img src="imgs/screenshots/new-report.png" width="480" alt="New report form for phone calls, radio and walk-ins"> |
+
+**Response teams.** Each team's status and the report it's on.
+
+<img src="imgs/screenshots/teams.png" alt="Response teams page showing dispatched, on-scene and available teams">
+
+---
+
 ## Tech stack
 
 | Component | Technology |

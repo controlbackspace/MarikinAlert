@@ -7,10 +7,10 @@
     var available = Model.Teams.Count(t => t.Status == TeamStatus.Available);
 }
 <div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" data-overdue="@Model.OverdueIds.Count"
-     class="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6 lg:items-start">
+     class="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6 lg:items-start">
 
-    @* Map, barangay counts and teams. On the right on wide screens (scrolls on its own), below the incidents on phones so reports come first. *@
-    <div class="order-2 mt-6 lg:mt-0 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto space-y-4">
+    @* Map, barangay counts and teams. On the right on wide screens (scrolls on its own), above the list on narrower windows. *@
+    <div class="mb-4 lg:mb-0 lg:order-2 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto space-y-4">
 
     @* Schematic map: tiles keep neighbouring barangays together but are not to scale. Layout lives in Marikina.Map. *@
     <section class="bg-white border border-line rounded-md" aria-label="Map of open reports and teams">
@@ -129,7 +129,7 @@
     </section>
     </div>
 
-    <div class="order-1 space-y-3 min-w-0">
+    <div class="space-y-3 lg:order-1 min-w-0">
         @if (Model.Barangay is not null)
         {
             <p class="text-sm">Showing <strong>Brgy. @Model.Barangay</strong> only.

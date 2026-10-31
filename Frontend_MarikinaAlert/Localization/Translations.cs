@@ -54,9 +54,9 @@ namespace Frontend_MarikinaAlert.Localization
             ["Mobile number"] = "Numero ng cellphone",
             ["Your report goes straight to Marikina dispatchers over the local network. No internet needed."] =
                 "Diretso sa mga dispatcher ng Marikina ang ulat mo sa lokal na network. Hindi kailangan ng internet.",
-            ["Couldn't send your report."] = "Hindi naipadala ang ulat mo.",
-            ["It's saved on this phone and will send by itself once you're connected again. Keep this page open."] =
-                "Naka-save ito sa phone na ito at kusang ipapadala kapag nakakonekta ka na ulit. Huwag isara ang page na ito.",
+            ["Report saved on this phone"] = "Naka-save ang ulat sa phone na ito",
+            ["It will send by itself once you're connected. Dispatchers don't have it yet, so keep this page open."] =
+                "Kusa itong ipapadala kapag nakakonekta ka na. Wala pa ito sa mga dispatcher, kaya huwag isara ang page na ito.",
             ["If someone is in danger right now, call {0} or {1}."] = "Kung may nasa panganib ngayon, tumawag sa {0} o {1}.",
             ["Send emergency report"] = "Ipadala ang ulat",
             ["Sending…"] = "Ipinapadala…",

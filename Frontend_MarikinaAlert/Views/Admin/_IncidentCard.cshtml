@@ -116,6 +116,28 @@
                 }
             </ul>
         }
+
+        @if (freeTeams.Count > 0)
+        {
+            @* Best match first: the agency that should respond, then the closest base on the map. *@
+            <form asp-action="AssignTeam" asp-route-id="@Model.Id" method="post" data-ajax data-done="Team dispatched"
+                  data-conflict="That team was just sent somewhere else. Pick another." class="mt-3 flex items-center gap-2">
+                <label class="text-sm font-semibold" for="team-@Model.Id">Send a team</label>
+                <span class="flex">
+                    <select id="team-@Model.Id" name="teamId" class="rounded-l-md border border-r-0 border-line bg-white text-sm px-2 py-[5px] max-w-[15rem]">
+                        @foreach (var t in freeTeams)
+                        {
+                            <option value="@t.Id">@t.Name (@(Marikina.Map.GetValueOrDefault(t.BaseBarangay)?.Label ?? t.BaseBarangay))</option>
+                        }
+                    </select>
+                    <button class="rounded-r-md bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-3 py-1.5 transition active:translate-y-px whitespace-nowrap">Send</button>
+                </span>
+            </form>
+        }
+        else if (anyTeams)
+        {
+            <p class="mt-3 text-sm text-muted">No free teams to send right now.</p>
+        }
     </div>
 
     <div class="px-5 py-3 border-t border-line bg-surface/60 flex flex-wrap items-center gap-2">
@@ -133,28 +155,10 @@
         {
             @* The link dials on a phone; admin.js also opens the relay dialog so the outcome gets logged. *@
             <a href="@Agency.TelHref(hotline)" data-call="@Model.Id" data-agency="@agency.Name" data-number="@hotline" data-summary="@summary"
-               class="rounded-md bg-[#05795B] hover:bg-[#04634A] text-white text-sm font-semibold px-3.5 py-2 transition active:translate-y-px">
-                Call @agency.Name <span class="font-mono text-[13px] font-medium">@hotline</span>
+               title="Call @agency.Name" aria-label="Call @agency.Name at @hotline"
+               class="rounded-md bg-[#05795B] hover:bg-[#04634A] text-white text-sm font-semibold px-3.5 py-2 transition active:translate-y-px whitespace-nowrap">
+                Call <span class="font-mono text-[13px] font-medium">@hotline</span>
             </a>
-        }
-        @if (freeTeams.Count > 0)
-        {
-            @* Best match first: the agency that should respond, then the closest base on the map. *@
-            <form asp-action="AssignTeam" asp-route-id="@Model.Id" method="post" data-ajax data-done="Team dispatched"
-                  data-conflict="That team was just sent somewhere else. Pick another." class="flex">
-                <label class="sr-only" for="team-@Model.Id">Team to send</label>
-                <select id="team-@Model.Id" name="teamId" class="rounded-l-md border border-r-0 border-line bg-white text-sm px-2 py-[7px] max-w-[13rem]">
-                    @foreach (var t in freeTeams)
-                    {
-                        <option value="@t.Id">@t.Name (@(Marikina.Map.GetValueOrDefault(t.BaseBarangay)?.Label ?? t.BaseBarangay))</option>
-                    }
-                </select>
-                <button class="rounded-r-md bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-3 py-2 transition active:translate-y-px whitespace-nowrap">Send team</button>
-            </form>
-        }
-        else if (anyTeams)
-        {
-            <span class="text-sm text-muted px-1">No free teams</span>
         }
         <form asp-action="Resolve" asp-route-id="@Model.Id" method="post" data-ajax data-done="Moved to History as resolved">
             <button class="rounded-md text-sm font-semibold text-ink hover:bg-black/5 px-3 py-2 transition">Resolve</button>
