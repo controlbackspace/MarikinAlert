@@ -1,0 +1,116 @@
+@model TeamsViewModel
+@{
+    ViewData["Title"] = "Teams";
+    Layout = "_AdminLayout";
+
+    var adding = Model.Invalid is { Id: 0 } ? Model.Invalid : new ResponseTeam();
+}
+
+<h1 class="text-2xl font-bold tracking-tight">Response teams</h1>
+<p class="text-sm text-muted mt-1 max-w-2xl">
+    Units you can send to a report, such as an engine, ambulance or rescue boat crew.
+    The base barangay is used to suggest the closest free team.
+</p>
+
+@if (TempData["SavedTeam"] is string saved)
+{
+    <p class="mt-5 border-l-4 border-success bg-white border border-line rounded-md px-5 py-3 font-semibold" role="status">Saved @saved.</p>
+}
+
+@{
+    async Task TeamForm(ResponseTeam t)
+    {
+        var showErrors = Model.Invalid is not null && Model.Invalid.Id == t.Id;
+        var prefix = t.Id == 0 ? "new" : $"t{t.Id}";
+        // Keep a team's current agency selectable even if that agency was hidden later.
+        var agencyNames = Model.AgencyNames.Contains(t.AgencyName) || t.AgencyName.Length == 0
+            ? Model.AgencyNames
+            : Model.AgencyNames.Append(t.AgencyName).ToList();
+
+        <form asp-action="SaveTeam" method="post" class="px-5 pt-4 pb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.2fr_1fr_0.8fr_auto] lg:items-start">
+            <input type="hidden" name="Id" value="@t.Id" />
+            <label class="block">
+                <span class="block text-sm font-semibold mb-1">Team name</span>
+                <input id="@prefix-name" name="Name" value="@t.Name" maxlength="60" required placeholder="e.g. BFP Engine 1" class="field !min-h-0 !py-2" />
+                @if (showErrors) { @Html.ValidationMessage("Name") }
+            </label>
+            <label class="block">
+                <span class="block text-sm font-semibold mb-1">Agency</span>
+                <select id="@prefix-agency" name="AgencyName" required class="field !min-h-0 !py-2">
+                    <option value="">Choose…</option>
+                    @foreach (var name in agencyNames)
+                    {
+                        <option value="@name" selected="@(name == t.AgencyName)">@name</option>
+                    }
+                </select>
+                @if (showErrors) { @Html.ValidationMessage("AgencyName") }
+            </label>
+            <label class="block">
+                <span class="block text-sm font-semibold mb-1">Based in</span>
+                <select id="@prefix-base" name="BaseBarangay" required class="field !min-h-0 !py-2">
+                    <option value="">Choose…</option>
+                    @foreach (var b in Marikina.Barangays)
+                    {
+                        <option value="@b" selected="@(b == t.BaseBarangay)">@b</option>
+                    }
+                </select>
+                @if (showErrors) { @Html.ValidationMessage("BaseBarangay") }
+            </label>
+            <label class="block">
+                <span class="block text-sm font-semibold mb-1">Call sign <span class="font-normal text-muted">(optional)</span></span>
+                <input id="@prefix-callsign" name="CallSign" value="@t.CallSign" maxlength="40" class="field !min-h-0 !py-2" />
+            </label>
+            <button class="lg:mt-6 rounded-md bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-4 py-2.5 transition active:translate-y-px">
+                @(t.Id == 0 ? "Add team" : "Save")
+            </button>
+        </form>
+    }
+}
+
+@if (Model.Teams.Count == 0)
+{
+    <div class="mt-6 bg-white border border-line rounded-md px-6 py-10 text-center">
+        <p class="text-lg font-bold">No teams yet</p>
+        <p class="text-muted mt-1">Add the units your command center can send out. They appear on the live incidents page.</p>
+    </div>
+}
+else
+{
+    <div class="mt-6 space-y-3">
+        @foreach (var team in Model.Teams)
+        {
+            var t = Model.Invalid is not null && Model.Invalid.Id == team.Id ? Model.Invalid : team;
+            <div class="bg-white border border-line rounded-md @(team.Status == TeamStatus.OutOfService ? "opacity-75" : "")">
+                <div class="px-5 py-2.5 border-b border-line bg-surface/60 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-t-md">
+                    <partial name="_TeamBadge" model="team" />
+                    @if (team.AssignedReportId is int reportId)
+                    {
+                        <a asp-action="Dashboard" asp-fragment="incident-@reportId" class="font-mono text-[13px] text-primary underline underline-offset-2">MA-@reportId.ToString("D5")</a>
+                    }
+                    @if (team.StatusChangedAtUtc is DateTime since)
+                    {
+                        <span class="text-sm text-muted">since @Marikina.TimeAgo(since)</span>
+                    }
+                    <span class="ml-auto flex gap-1">
+                        <partial name="_TeamActions" model="team" />
+                        @if (team.Status is TeamStatus.Available or TeamStatus.Returning)
+                        {
+                            <form asp-action="SetTeamStatus" method="post" class="inline">
+                                <input type="hidden" name="teamId" value="@team.Id" />
+                                <input type="hidden" name="status" value="@TeamStatus.OutOfService" />
+                                <input type="hidden" name="returnUrl" value="@Url.Action("Teams")" />
+                                <button class="rounded-md border border-line bg-white hover:border-danger hover:text-danger text-xs font-semibold px-2 py-1 transition">Out of service</button>
+                            </form>
+                        }
+                    </span>
+                </div>
+                @{ await TeamForm(t); }
+            </div>
+        }
+    </div>
+}
+
+<h2 class="mt-10 mb-3 text-lg font-bold">Add a team</h2>
+<div class="bg-white border border-line rounded-md">
+    @{ await TeamForm(adding); }
+</div>

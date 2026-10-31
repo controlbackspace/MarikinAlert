@@ -55,13 +55,20 @@ namespace Frontend_MarikinaAlert.Localization
             ["Your report goes straight to Marikina dispatchers over the local network. No internet needed."] =
                 "Diretso sa mga dispatcher ng Marikina ang ulat mo sa lokal na network. Hindi kailangan ng internet.",
             ["Couldn't send your report."] = "Hindi naipadala ang ulat mo.",
-            ["Check that you're still connected to the Wi-Fi. Your message is saved on this phone."] =
-                "Tingnan kung nakakonekta ka pa sa Wi-Fi. Naka-save ang mensahe mo sa phone na ito.",
-            ["The system had a problem. Reload the page and send again. Your message is saved on this phone."] =
-                "Nagka-problema ang system. I-reload ang page at ipadala ulit. Naka-save ang mensahe mo sa phone na ito.",
+            ["It's saved on this phone and will send by itself once you're connected again. Keep this page open."] =
+                "Naka-save ito sa phone na ito at kusang ipapadala kapag nakakonekta ka na ulit. Huwag isara ang page na ito.",
+            ["If someone is in danger right now, call {0} or {1}."] = "Kung may nasa panganib ngayon, tumawag sa {0} o {1}.",
             ["Send emergency report"] = "Ipadala ang ulat",
             ["Sending…"] = "Ipinapadala…",
-            ["Try again"] = "Subukan ulit",
+            ["Send now"] = "Ipadala ngayon",
+
+            // Saved reports waiting to send (banner on every resident page)
+            ["A report on this phone hasn't been sent yet. It will send by itself once you're connected."] =
+                "May ulat sa phone na ito na hindi pa naipapadala. Kusa itong ipapadala kapag nakakonekta ka na.",
+            ["Your saved report was sent."] = "Naipadala na ang naka-save mong ulat.",
+            ["A saved report needs to be checked before it can be sent."] =
+                "Kailangang suriin ang naka-save na ulat bago ito maipadala.",
+            ["Open it"] = "Buksan",
             ["We restored your unsent report."] = "Ibinalik namin ang hindi pa naipadalang ulat mo.",
             ["Start over"] = "Magsimula ulit",
 

@@ -13,6 +13,9 @@ namespace Frontend_MarikinaAlert.Data
             AddColumnIfMissing(db, "DisasterReports", "TrackingCode", "TEXT NULL");
             AddColumnIfMissing(db, "DisasterReports", "Source", "TEXT NOT NULL DEFAULT 'App'");
             AddColumnIfMissing(db, "DisasterReports", "LoggedBy", "TEXT NULL");
+            AddColumnIfMissing(db, "DisasterReports", "ClientRequestId", "TEXT NULL");
+            db.Database.ExecuteSqlRaw(
+                "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_DisasterReports_ClientRequestId\" ON \"DisasterReports\" (\"ClientRequestId\");");
             db.Database.ExecuteSqlRaw(
                 "CREATE INDEX IF NOT EXISTS \"IX_DisasterReports_TrackingCode\" ON \"DisasterReports\" (\"TrackingCode\");");
 
@@ -47,6 +50,21 @@ namespace Frontend_MarikinaAlert.Data
                 """);
             db.Database.ExecuteSqlRaw(
                 "CREATE INDEX IF NOT EXISTS \"IX_ContactAttempts_ReportId\" ON \"ContactAttempts\" (\"ReportId\");");
+
+            db.Database.ExecuteSqlRaw("""
+                CREATE TABLE IF NOT EXISTS "ResponseTeams" (
+                    "Id" INTEGER NOT NULL CONSTRAINT "PK_ResponseTeams" PRIMARY KEY AUTOINCREMENT,
+                    "Name" TEXT NOT NULL,
+                    "AgencyName" TEXT NOT NULL,
+                    "BaseBarangay" TEXT NOT NULL,
+                    "CallSign" TEXT NULL,
+                    "Status" TEXT NOT NULL,
+                    "AssignedReportId" INTEGER NULL,
+                    "StatusChangedAtUtc" TEXT NULL
+                );
+                """);
+            db.Database.ExecuteSqlRaw(
+                "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_ResponseTeams_Name\" ON \"ResponseTeams\" (\"Name\");");
 
             // First run: list the agencies the triage suggests, with no numbers. Numbers must come from official sources.
             if (!db.Agencies.Any())

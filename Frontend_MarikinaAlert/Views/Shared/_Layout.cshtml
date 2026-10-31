@@ -33,6 +33,19 @@
     </header>
     <div class="h-1 bg-accent" aria-hidden="true"></div>
 
+    @* Reports saved on this phone while offline. site.js shows this and sends them once the connection is back. *@
+    <div id="outbox-banner" hidden role="status"
+         data-msg-waiting="@T["A report on this phone hasn't been sent yet. It will send by itself once you're connected."]"
+         data-msg-sent="@T["Your saved report was sent."]" data-msg-code="@T["Your tracking code"]"
+         data-msg-invalid="@T["A saved report needs to be checked before it can be sent."]" data-msg-open="@T["Open it"]"
+         class="bg-[#FFF3E0] border-b border-accent/40">
+        <div class="max-w-xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+            <p id="outbox-text" class="flex-1 min-w-[12rem]"></p>
+            <button type="button" id="outbox-send" class="shrink-0 rounded-md bg-primary text-white font-semibold px-3.5 py-2">@T["Send now"]</button>
+            <a id="outbox-link" hidden class="shrink-0 font-semibold text-primary underline underline-offset-2"></a>
+        </div>
+    </div>
+
     <main id="main" class="flex-1 w-full max-w-xl mx-auto px-4 pt-8 pb-12">
         @RenderBody()
     </main>

@@ -4,6 +4,7 @@ using Frontend_MarikinaAlert.Repositories;
 using Frontend_MarikinaAlert.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace Frontend_MarikinaAlert.Controllers
@@ -18,6 +19,11 @@ namespace Frontend_MarikinaAlert.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateReportViewModel model)
         {
+            // A phone re-sending a report it already sent (the reply was lost on a bad connection) gets the same confirmation.
+            var requestId = ValidRequestId(model.ClientRequestId);
+            if (requestId is not null && await reports.GetByClientRequestIdAsync(requestId) is { } alreadySent)
+                return Confirm(alreadySent.Id);
+
             // Some keyboards send "ñ" decomposed (n + combining tilde); normalize before comparing.
             model.Barangay = model.Barangay?.Normalize(System.Text.NormalizationForm.FormC);
             if (model.Barangay is not null && !Marikina.Barangays.Contains(model.Barangay))
@@ -27,27 +33,48 @@ namespace Frontend_MarikinaAlert.Controllers
 
             var result = triage.Triage(model.RawMessage!, model.SelectedCategory);
 
-            var report = await reports.AddAsync(new DisasterReport
+            DisasterReport report;
+            try
             {
-                SenderName = Clean(model.SenderName),
-                ContactNumber = Clean(model.ContactNumber),
-                Barangay = model.Barangay!,
-                Landmark = Clean(model.Landmark),
-                RawMessage = model.RawMessage!.Trim(),
-                Category = result.Category,
-                Priority = result.Priority,
-                MatchedKeywords = result.MatchedKeywords.Count > 0 ? string.Join(", ", result.MatchedKeywords) : null,
-                Status = ReportStatus.Active,
-                TrackingCode = await TrackingCodes.NewAsync(reports)
-            });
+                report = await reports.AddAsync(new DisasterReport
+                {
+                    SenderName = Clean(model.SenderName),
+                    ContactNumber = Clean(model.ContactNumber),
+                    Barangay = model.Barangay!,
+                    Landmark = Clean(model.Landmark),
+                    RawMessage = model.RawMessage!.Trim(),
+                    Category = result.Category,
+                    Priority = result.Priority,
+                    MatchedKeywords = result.MatchedKeywords.Count > 0 ? string.Join(", ", result.MatchedKeywords) : null,
+                    Status = ReportStatus.Active,
+                    TrackingCode = await TrackingCodes.NewAsync(reports),
+                    ClientRequestId = requestId
+                });
+            }
+            catch (DbUpdateException) when (requestId is not null)
+            {
+                // Two copies of the same report arrived at once and the other one was saved first.
+                var saved = await reports.GetByClientRequestIdAsync(requestId);
+                if (saved is null) throw;
+                return Confirm(saved.Id);
+            }
 
-            // Post/Redirect/Get so refreshing the confirmation page doesn't send a duplicate report.
-            // The id travels in TempData (an encrypted cookie), not the URL, so only the browser that
-            // sent the report can see its confirmation; ids are sequential and would otherwise leak
-            // other residents' locations and phone numbers.
-            TempData[SubmittedKey] = report.Id;
+            return Confirm(report.Id);
+        }
+
+        // Post/Redirect/Get so refreshing the confirmation page doesn't send a duplicate report.
+        // The id travels in TempData (an encrypted cookie), not the URL, so only the browser that
+        // sent the report can see its confirmation; ids are sequential and would otherwise leak
+        // other residents' locations and phone numbers.
+        private RedirectToActionResult Confirm(int reportId)
+        {
+            TempData[SubmittedKey] = reportId;
             return RedirectToAction(nameof(Submitted));
         }
+
+        // Only long random ids count: a short or guessable one could pull up someone else's confirmation.
+        private static string? ValidRequestId(string? id) =>
+            id is { Length: >= 32 and <= 36 } && id.All(c => char.IsAsciiHexDigit(c) || c == '-') ? id.ToLowerInvariant() : null;
 
         [HttpGet]
         public async Task<IActionResult> Submitted()

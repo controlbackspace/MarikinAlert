@@ -29,6 +29,9 @@ namespace Frontend_MarikinaAlert.Models
 
         // Optional quick-pick from the chips; triage keywords take precedence.
         public ReportCategory? SelectedCategory { get; set; }
+
+        // Set by site.js; not validated here because a bad value just means no duplicate protection.
+        public string? ClientRequestId { get; set; }
     }
 
     // Dispatcher's "New report" form: the resident form plus how the report came in.
@@ -73,6 +76,20 @@ namespace Frontend_MarikinaAlert.Models
 
         // Report id -> calls and radio attempts made for it, oldest first.
         public ILookup<int, ContactAttempt> Contacts { get; set; } = Array.Empty<ContactAttempt>().ToLookup(c => c.ReportId);
+
+        // Every team, for the map, the team list and the Assign menu on each card.
+        public IReadOnlyList<ResponseTeam> Teams { get; set; } = [];
+    }
+
+    public class TeamsViewModel
+    {
+        public IReadOnlyList<ResponseTeam> Teams { get; set; } = [];
+
+        // Agency names for the dropdown, from the Agencies page.
+        public IReadOnlyList<string> AgencyNames { get; set; } = [];
+
+        // The team whose form failed validation (Id 0 = the "Add team" form).
+        public ResponseTeam? Invalid { get; set; }
     }
 
     public class AgenciesViewModel

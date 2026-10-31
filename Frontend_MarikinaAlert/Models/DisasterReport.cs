@@ -73,6 +73,11 @@ namespace Frontend_MarikinaAlert.Models
         [MaxLength(12)]
         public string? TrackingCode { get; set; }
 
+        // Random id the resident's phone gives each report, so re-sending after a dropped connection
+        // returns the same report instead of creating a duplicate.
+        [MaxLength(36)]
+        public string? ClientRequestId { get; set; }
+
         public ReportSource Source { get; set; }
 
         // Dispatcher who typed the report in; null when a resident sent it.

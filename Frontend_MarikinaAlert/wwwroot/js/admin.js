@@ -84,7 +84,7 @@
                 lastSignature = signature;
                 feed.replaceChildren(template.content);
                 const ids = currentIds();
-                const fresh = [...ids].filter(id => !knownIds.has(id));
+                const fresh = knownIds ? [...ids].filter(id => !knownIds.has(id)) : [];
                 fresh.forEach(id => feed.querySelector(`.incident[data-id="${id}"]`)?.classList.add('animate-flash'));
 
                 if (fresh.length) {
@@ -94,6 +94,7 @@
                 }
                 knownIds = ids;
             }
+            if (!knownIds) knownIds = currentIds(); // filter changed but the list didn't
 
             if (data) {
                 document.getElementById('critical-count').textContent = data.dataset.critical;
@@ -119,15 +120,15 @@
     // Filters apply instantly without a page reload; URL stays shareable.
     filters.addEventListener('change', () => {
         history.replaceState(null, '', feedUrl().page);
-        knownIds = new Set(); // don't flash everything as "new" after a filter change
-        refresh().then(() => { knownIds = currentIds(); });
+        knownIds = null; // a filter change is not "new reports": no flash, no toast
+        refresh();
     });
 
-    // Barangay list: click a barangay to show only its reports; "Show all" clears it.
+    // Barangay list and map: click a barangay to show only its reports; click it again or "Show all" to clear.
     feed.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-barangay]');
         if (!btn) return;
-        filters.elements.barangay.value = btn.dataset.barangay;
+        filters.elements.barangay.value = btn.getAttribute('aria-pressed') === 'true' ? '' : btn.dataset.barangay;
         filters.dispatchEvent(new Event('change'));
     });
 
@@ -140,7 +141,7 @@
         if (soundOn) beep(); // also unlocks audio, browsers require a user gesture
     });
 
-    // ---------- card actions (Verify / Resolve / Archive) ----------
+    // ---------- card actions (Verify / Resolve / Archive / teams) ----------
 
     async function post(form) {
         const res = await fetch(form.action, {
@@ -148,7 +149,7 @@
             body: new FormData(form),
             headers: { 'X-Requested-With': 'fetch' }
         });
-        if (!res.ok) throw new Error(res.status);
+        if (!res.ok) throw new Error(String(res.status));
     }
 
     feed.addEventListener('submit', async function (e) {
@@ -163,9 +164,15 @@
             await post(form);
             toast(form.dataset.done || 'Saved');
             await refresh();
-        } catch {
+        } catch (err) {
             button.disabled = false;
-            toast('Could not save. Check the connection and try again.', true);
+            // 409: someone else changed it first (e.g. the team was just sent elsewhere). Show the latest state.
+            if (err.message === '409') {
+                toast(form.dataset.conflict || 'This was changed by someone else. The list has been updated.', true);
+                refresh();
+            } else {
+                toast('Could not save. Check the connection and try again.', true);
+            }
         }
     });
 

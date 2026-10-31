@@ -23,6 +23,9 @@ namespace Frontend_MarikinaAlert.Repositories
         public Task<DisasterReport?> GetByTrackingCodeAsync(string code) =>
             db.DisasterReports.AsNoTracking().FirstOrDefaultAsync(r => r.TrackingCode == code);
 
+        public Task<DisasterReport?> GetByClientRequestIdAsync(string clientRequestId) =>
+            db.DisasterReports.AsNoTracking().FirstOrDefaultAsync(r => r.ClientRequestId == clientRequestId);
+
         public async Task UpdateAsync(DisasterReport report)
         {
             report.UpdatedAtUtc = DateTime.UtcNow;

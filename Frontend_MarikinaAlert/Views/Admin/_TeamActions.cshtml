@@ -1,0 +1,22 @@
+@model ResponseTeam
+@{
+    // Next steps in the team's cycle; must match AdminController.CanMove.
+    var steps = Model.Status switch
+    {
+        TeamStatus.Dispatched => new[] { (TeamStatus.OnScene, "On scene"), (TeamStatus.Available, "Recall") },
+        TeamStatus.OnScene => new[] { (TeamStatus.Returning, "Left scene") },
+        TeamStatus.Returning => new[] { (TeamStatus.Available, "Back at base") },
+        TeamStatus.OutOfService => new[] { (TeamStatus.Available, "Back in service") },
+        _ => Array.Empty<(TeamStatus, string)>()
+    };
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+@foreach (var (status, label) in steps)
+{
+    <form asp-action="SetTeamStatus" method="post" data-ajax data-done="@Model.Name: @label.ToLowerInvariant()" class="inline">
+        <input type="hidden" name="teamId" value="@Model.Id" />
+        <input type="hidden" name="status" value="@status" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button class="rounded-md border border-line bg-white hover:border-primary hover:text-primary text-xs font-semibold px-2 py-1 transition whitespace-nowrap">@label</button>
+    </form>
+}
