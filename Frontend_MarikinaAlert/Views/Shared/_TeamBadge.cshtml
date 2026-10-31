@@ -1,0 +1,12 @@
+@model ResponseTeam
+@{
+    var style = Model.Status switch
+    {
+        TeamStatus.Available => "bg-success/10 text-[#05795B]",
+        TeamStatus.Dispatched => "bg-primary/10 text-primary",
+        TeamStatus.OnScene => "bg-accent/15 text-[#B34D00]",
+        TeamStatus.Returning => "bg-info/10 text-info",
+        _ => "bg-black/5 text-muted"
+    };
+}
+<span class="inline-block rounded-sm px-1.5 py-px text-xs font-bold whitespace-nowrap @style">@Model.StatusText</span>

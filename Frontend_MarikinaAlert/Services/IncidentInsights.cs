@@ -16,6 +16,17 @@ namespace Frontend_MarikinaAlert.Services
             _ => null
         };
 
+        /// <summary>
+        /// Free teams for a report, best first: teams of the agency that should respond, then the closest on the map.
+        /// </summary>
+        public static IReadOnlyList<ResponseTeam> RankTeams(IEnumerable<ResponseTeam> teams, DisasterReport report, string agencyName) =>
+            teams
+                .Where(t => t.Status == TeamStatus.Available)
+                .OrderBy(t => string.Equals(t.AgencyName, agencyName, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(t => Marikina.TileDistance(t.BaseBarangay, report.Barangay))
+                .ThenBy(t => t.Name)
+                .ToList();
+
         public static bool IsOverdue(DisasterReport report, DateTime nowUtc) =>
             report.Status == ReportStatus.Active
             && OverdueAfter(report.Priority) is { } limit

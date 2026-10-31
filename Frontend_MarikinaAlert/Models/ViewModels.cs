@@ -73,6 +73,20 @@ namespace Frontend_MarikinaAlert.Models
 
         // Report id -> calls and radio attempts made for it, oldest first.
         public ILookup<int, ContactAttempt> Contacts { get; set; } = Array.Empty<ContactAttempt>().ToLookup(c => c.ReportId);
+
+        // Every team, for the map, the team list and the Assign menu on each card.
+        public IReadOnlyList<ResponseTeam> Teams { get; set; } = [];
+    }
+
+    public class TeamsViewModel
+    {
+        public IReadOnlyList<ResponseTeam> Teams { get; set; } = [];
+
+        // Agency names for the dropdown, from the Agencies page.
+        public IReadOnlyList<string> AgencyNames { get; set; } = [];
+
+        // The team whose form failed validation (Id 0 = the "Add team" form).
+        public ResponseTeam? Invalid { get; set; }
     }
 
     public class AgenciesViewModel

@@ -1,12 +1,59 @@
 @model IncidentFeedViewModel
 @{
     var filtered = Model.Category is not null || Model.Status is not null || Model.Barangay is not null;
+    var counts = Model.BarangaySummary.ToDictionary(b => b.Barangay);
+    var teamsByBase = Model.Teams.ToLookup(t => t.BaseBarangay);
+    var teamsByReport = Model.Teams.Where(t => t.AssignedReportId is not null).ToLookup(t => t.AssignedReportId!.Value);
+    var available = Model.Teams.Count(t => t.Status == TeamStatus.Available);
 }
 <div id="feed-data" data-critical="@Model.CriticalCount" data-open="@Model.OpenCount" data-overdue="@Model.OverdueIds.Count"
-     class="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-6 lg:items-start">
+     class="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6 lg:items-start">
 
-    @* Open reports per barangay. Sits on the right on wide screens, above the list on smaller ones. *@
-    <aside class="mb-4 lg:mb-0 lg:order-2 lg:sticky lg:top-[4.5rem] bg-white border border-line rounded-md" aria-label="Open reports by barangay">
+    @* Map, barangay counts and teams. On the right on wide screens (scrolls on its own), below the incidents on phones so reports come first. *@
+    <div class="order-2 mt-6 lg:mt-0 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto space-y-4">
+
+    @* Schematic map: tiles keep neighbouring barangays together but are not to scale. Layout lives in Marikina.Map. *@
+    <section class="bg-white border border-line rounded-md" aria-label="Map of open reports and teams">
+        <div class="px-4 py-3 border-b border-line flex items-baseline justify-between gap-2">
+            <h2 class="font-bold">Map</h2>
+            <span class="text-xs text-muted">Schematic, not to scale</span>
+        </div>
+        <div class="p-3 grid grid-cols-4 gap-1">
+            @foreach (var (name, tile) in Marikina.Map)
+            {
+                var c = counts.GetValueOrDefault(name);
+                var active = name == Model.Barangay;
+                var tone = c is null ? "bg-surface text-muted border-line hover:border-muted"
+                    : c.Critical > 0 ? "bg-danger text-white border-danger"
+                    : "bg-accent/15 text-ink border-accent";
+                var title = $"{name}: {c?.Open ?? 0} open" + (c?.Critical > 0 ? $", {c.Critical} critical" : "")
+                    + $", {teamsByBase[name].Count()} team(s) based here";
+                <button type="button" data-barangay="@name" aria-pressed="@(active ? "true" : "false")" title="@title"
+                        style="grid-column: @(tile.Col + 1); grid-row: @(tile.Row + 1)"
+                        class="relative min-h-[3.25rem] rounded border px-1 pt-1 pb-3 text-left leading-tight transition @tone @(active ? "ring-2 ring-primary ring-offset-1" : "")">
+                    <span class="block text-[11px] font-semibold tracking-tight">@tile.Label</span>
+                    @if (c is not null)
+                    {
+                        <span class="block text-sm font-bold tabular-nums">@c.Open</span>
+                    }
+                    <span class="absolute left-1 bottom-1 flex gap-0.5" aria-hidden="true">
+                        @foreach (var t in teamsByBase[name])
+                        {
+                            <span class="w-1.5 h-1.5 rounded-full ring-1 ring-white @(t.Status == TeamStatus.Available ? "bg-success" : t.IsBusy ? "bg-primary" : t.Status == TeamStatus.Returning ? "bg-info" : "bg-muted/50")"></span>
+                        }
+                    </span>
+                </button>
+            }
+        </div>
+        <p class="px-4 pb-3 text-xs text-muted flex flex-wrap gap-x-3 gap-y-1">
+            <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-danger align-[-1px]"></span> Critical</span>
+            <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-accent/40 align-[-1px]"></span> Open</span>
+            <span><span class="inline-block w-1.5 h-1.5 rounded-full bg-success align-[1px]"></span> Free team</span>
+            <span><span class="inline-block w-1.5 h-1.5 rounded-full bg-primary align-[1px]"></span> Team out</span>
+        </p>
+    </section>
+
+    <aside class="bg-white border border-line rounded-md" aria-label="Open reports by barangay">
         <div class="px-4 py-3 border-b border-line flex items-baseline justify-between gap-2">
             <h2 class="font-bold">By barangay</h2>
             @if (Model.Barangay is not null)
@@ -20,7 +67,7 @@
         }
         else
         {
-            <ul class="max-h-48 lg:max-h-[calc(100dvh-10rem)] overflow-y-auto divide-y divide-line text-[15px]">
+            <ul class="max-h-48 overflow-y-auto divide-y divide-line text-[15px]">
                 @foreach (var b in Model.BarangaySummary)
                 {
                     var active = b.Barangay == Model.Barangay;
@@ -46,7 +93,43 @@
         }
     </aside>
 
-    <div class="space-y-3 lg:order-1 min-w-0">
+    <section class="bg-white border border-line rounded-md" aria-label="Response teams">
+        <div class="px-4 py-3 border-b border-line flex items-baseline justify-between gap-2">
+            <h2 class="font-bold">Teams <span class="font-normal text-sm text-muted">@available of @Model.Teams.Count free</span></h2>
+            <a asp-action="Teams" class="text-sm font-semibold text-primary hover:underline underline-offset-4">Manage</a>
+        </div>
+        @if (Model.Teams.Count == 0)
+        {
+            <p class="px-4 py-3 text-sm text-muted">No teams yet. <a asp-action="Teams" class="font-semibold text-primary underline underline-offset-2">Add your teams</a> to assign them to reports.</p>
+        }
+        else
+        {
+            <ul class="divide-y divide-line text-sm">
+                @foreach (var t in Model.Teams.OrderBy(t => t.Status == TeamStatus.Returning ? 0 : t.IsBusy ? 1 : t.Status == TeamStatus.Available ? 2 : 3).ThenBy(t => t.Name))
+                {
+                    <li class="px-4 py-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-semibold truncate" title="@t.AgencyName · based in @t.BaseBarangay">@t.Name</span>
+                            <partial name="_TeamBadge" model="t" />
+                        </div>
+                        @if (t.AssignedReportId is not null || t.Status == TeamStatus.Returning)
+                        {
+                            <div class="mt-1 flex items-center justify-between gap-2">
+                                @if (t.AssignedReportId is int reportId)
+                                {
+                                    <a href="#incident-@reportId" class="font-mono text-[13px] text-primary underline underline-offset-2">MA-@reportId.ToString("D5")</a>
+                                }
+                                <span class="ml-auto flex gap-1"><partial name="_TeamActions" model="t" /></span>
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+    </div>
+
+    <div class="order-1 space-y-3 min-w-0">
         @if (Model.Barangay is not null)
         {
             <p class="text-sm">Showing <strong>Brgy. @Model.Barangay</strong> only.
@@ -72,7 +155,10 @@
                     ["Overdue"] = Model.OverdueIds.Contains(report.Id),
                     ["DuplicateOf"] = Model.DuplicateOf.TryGetValue(report.Id, out var originalId) ? originalId : (int?)null,
                     ["Agency"] = Model.Agencies.GetValueOrDefault(agencyName),
-                    ["Contacts"] = Model.Contacts[report.Id].ToList()
+                    ["Contacts"] = Model.Contacts[report.Id].ToList(),
+                    ["Teams"] = teamsByReport[report.Id].ToList(),
+                    ["FreeTeams"] = IncidentInsights.RankTeams(Model.Teams, report, agencyName),
+                    ["AnyTeams"] = Model.Teams.Count > 0
                 };
                 <partial name="_IncidentCard" model="report" view-data="hints" />
             }

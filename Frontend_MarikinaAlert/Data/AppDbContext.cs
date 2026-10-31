@@ -8,6 +8,7 @@ namespace Frontend_MarikinaAlert.Data
         public DbSet<DisasterReport> DisasterReports => Set<DisasterReport>();
         public DbSet<Agency> Agencies => Set<Agency>();
         public DbSet<ContactAttempt> ContactAttempts => Set<ContactAttempt>();
+        public DbSet<ResponseTeam> ResponseTeams => Set<ResponseTeam>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +34,10 @@ namespace Frontend_MarikinaAlert.Data
             contact.Property(c => c.Outcome).HasConversion<string>().HasMaxLength(20);
             contact.HasOne<DisasterReport>().WithMany().HasForeignKey(c => c.ReportId).OnDelete(DeleteBehavior.Cascade);
             contact.HasIndex(c => c.ReportId);
+
+            var team = modelBuilder.Entity<ResponseTeam>();
+            team.Property(t => t.Status).HasConversion<string>().HasMaxLength(20);
+            team.HasIndex(t => t.Name).IsUnique();
         }
 
         public override int SaveChanges()

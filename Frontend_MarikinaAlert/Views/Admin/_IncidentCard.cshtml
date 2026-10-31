@@ -21,6 +21,9 @@
     var waitingMinutes = (int)(DateTime.UtcNow - Model.CreatedAtUtc).TotalMinutes;
     var agency = ViewData["Agency"] as Agency;
     var contacts = ViewData["Contacts"] as List<ContactAttempt> ?? new List<ContactAttempt>();
+    var teams = ViewData["Teams"] as List<ResponseTeam> ?? new List<ResponseTeam>();
+    var freeTeams = ViewData["FreeTeams"] as IReadOnlyList<ResponseTeam> ?? Array.Empty<ResponseTeam>();
+    var anyTeams = ViewData["AnyTeams"] as bool? == true;
 }
 <article id="incident-@Model.Id" data-id="@Model.Id" data-priority="@Model.Priority"
          class="incident scroll-mt-20 bg-white border border-l-[5px] @accent rounded-md @(overdue ? "border-danger shadow-[0_0_0_1px_#D62828]" : "border-line")">
@@ -94,6 +97,25 @@
                 }
             </ol>
         }
+
+        @if (teams.Count > 0)
+        {
+            <ul class="mt-3 space-y-1.5" aria-label="Teams on this report">
+                @foreach (var t in teams)
+                {
+                    <li class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                        <span class="font-semibold">@t.Name</span>
+                        <span class="text-muted">@t.AgencyName@(t.CallSign is null ? "" : $" · {t.CallSign}")</span>
+                        <partial name="_TeamBadge" model="t" />
+                        @if (t.StatusChangedAtUtc is DateTime since)
+                        {
+                            <span class="text-muted">@Marikina.TimeAgo(since)</span>
+                        }
+                        <span class="flex gap-1"><partial name="_TeamActions" model="t" /></span>
+                    </li>
+                }
+            </ul>
+        }
     </div>
 
     <div class="px-5 py-3 border-t border-line bg-surface/60 flex flex-wrap items-center gap-2">
@@ -114,6 +136,25 @@
                class="rounded-md bg-[#05795B] hover:bg-[#04634A] text-white text-sm font-semibold px-3.5 py-2 transition active:translate-y-px">
                 Call @agency.Name <span class="font-mono text-[13px] font-medium">@hotline</span>
             </a>
+        }
+        @if (freeTeams.Count > 0)
+        {
+            @* Best match first: the agency that should respond, then the closest base on the map. *@
+            <form asp-action="AssignTeam" asp-route-id="@Model.Id" method="post" data-ajax data-done="Team dispatched"
+                  data-conflict="That team was just sent somewhere else. Pick another." class="flex">
+                <label class="sr-only" for="team-@Model.Id">Team to send</label>
+                <select id="team-@Model.Id" name="teamId" class="rounded-l-md border border-r-0 border-line bg-white text-sm px-2 py-[7px] max-w-[13rem]">
+                    @foreach (var t in freeTeams)
+                    {
+                        <option value="@t.Id">@t.Name (@(Marikina.Map.GetValueOrDefault(t.BaseBarangay)?.Label ?? t.BaseBarangay))</option>
+                    }
+                </select>
+                <button class="rounded-r-md bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-3 py-2 transition active:translate-y-px whitespace-nowrap">Send team</button>
+            </form>
+        }
+        else if (anyTeams)
+        {
+            <span class="text-sm text-muted px-1">No free teams</span>
         }
         <form asp-action="Resolve" asp-route-id="@Model.Id" method="post" data-ajax data-done="Moved to History as resolved">
             <button class="rounded-md text-sm font-semibold text-ink hover:bg-black/5 px-3 py-2 transition">Resolve</button>

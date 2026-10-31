@@ -13,7 +13,8 @@ namespace Frontend_MarikinaAlert.Controllers
 {
     // Dispatcher / Incident Triage Officer pages.
     [Authorize]
-    public class AdminController(IReportRepository reports, IAgencyRepository agencies, IDisasterTriageService triage, IConfiguration config) : Controller
+    public class AdminController(IReportRepository reports, IAgencyRepository agencies, ITeamRepository teams,
+        IDisasterTriageService triage, IConfiguration config) : Controller
     {
         // ---------- Login ----------
 
@@ -104,7 +105,8 @@ namespace Frontend_MarikinaAlert.Controllers
                     .OrderByDescending(b => b.Critical).ThenByDescending(b => b.Open).ThenBy(b => b.Barangay)
                     .ToList(),
                 Agencies = directory,
-                Contacts = contacts.ToLookup(c => c.ReportId)
+                Contacts = contacts.ToLookup(c => c.ReportId),
+                Teams = await teams.GetAllAsync()
             };
         }
 
@@ -188,29 +190,142 @@ namespace Frontend_MarikinaAlert.Controllers
             return RedirectToAction(nameof(Dashboard));
         }
 
+        // Closing a report sends any teams still out on it back to base.
         [HttpPost, ValidateAntiForgeryToken]
-        public Task<IActionResult> Resolve(int id) => ChangeAsync(id, r => r.Status = ReportStatus.Resolved);
+        public Task<IActionResult> Resolve(int id) =>
+            ChangeAsync(id, r => r.Status = ReportStatus.Resolved, after: teams.ReleaseFromReportAsync);
 
         [HttpPost, ValidateAntiForgeryToken]
-        public Task<IActionResult> Dismiss(int id) => ChangeAsync(id, r => r.Status = ReportStatus.Dismissed);
+        public Task<IActionResult> Dismiss(int id) =>
+            ChangeAsync(id, r => r.Status = ReportStatus.Dismissed, after: teams.ReleaseFromReportAsync);
+
+        // ---------- Response teams ----------
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignTeam(int id, int teamId)
+        {
+            var report = await reports.GetByIdAsync(id);
+            var team = await teams.GetByIdAsync(teamId);
+            if (report is null || team is null) return NotFound();
+            // Another dispatcher may have sent this team out a moment ago.
+            if (team.Status != TeamStatus.Available || !report.IsOpen) return Conflict();
+
+            team.Status = TeamStatus.Dispatched;
+            team.AssignedReportId = report.Id;
+            team.StatusChangedAtUtc = DateTime.UtcNow;
+            await teams.UpdateAsync(team);
+
+            // Sending a team means the report is confirmed and handed to that team's agency.
+            report.IsVerified = true;
+            report.RelayedTo ??= team.AgencyName;
+            if (report.Status is ReportStatus.Active or ReportStatus.Verified) report.Status = ReportStatus.Relayed;
+            await reports.UpdateAsync(report);
+
+            return Done();
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetTeamStatus(int teamId, TeamStatus status, string? returnUrl)
+        {
+            if (!ModelState.IsValid || !Enum.IsDefined(status)) return BadRequest();
+            var team = await teams.GetByIdAsync(teamId);
+            if (team is null) return NotFound();
+            if (!CanMove(team.Status, status)) return Conflict();
+
+            team.Status = status;
+            team.StatusChangedAtUtc = DateTime.UtcNow;
+            if (status is TeamStatus.Available or TeamStatus.OutOfService) team.AssignedReportId = null;
+            await teams.UpdateAsync(team);
+
+            return Done(returnUrl);
+        }
+
+        // Normal cycle: Available -> Dispatched -> On scene -> Returning -> Available.
+        // A dispatched team can be recalled straight to Available; a team can go out of service only while not on a job.
+        private static bool CanMove(TeamStatus from, TeamStatus to) => (from, to) switch
+        {
+            (TeamStatus.Dispatched, TeamStatus.OnScene) => true,
+            (TeamStatus.Dispatched or TeamStatus.OnScene, TeamStatus.Returning) => true,
+            (TeamStatus.Dispatched or TeamStatus.Returning or TeamStatus.OutOfService, TeamStatus.Available) => true,
+            (TeamStatus.Available or TeamStatus.Returning, TeamStatus.OutOfService) => true,
+            _ => false
+        };
+
+        [HttpGet]
+        public async Task<IActionResult> Teams() => View(await BuildTeamsAsync());
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveTeam(ResponseTeam model)
+        {
+            model.Name = model.Name?.Trim() ?? "";
+            model.AgencyName = model.AgencyName?.Trim() ?? "";
+            model.BaseBarangay = model.BaseBarangay?.Normalize(System.Text.NormalizationForm.FormC) ?? "";
+            model.CallSign = Clean(model.CallSign);
+
+            var all = await teams.GetAllAsync();
+            if (all.Any(t => t.Id != model.Id && string.Equals(t.Name, model.Name, StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(ResponseTeam.Name), "Another team already has this name.");
+            if (model.BaseBarangay.Length > 0 && !Marikina.Barangays.Contains(model.BaseBarangay))
+                ModelState.AddModelError(nameof(ResponseTeam.BaseBarangay), "Choose a barangay from the list.");
+
+            if (!ModelState.IsValid)
+            {
+                var vm = await BuildTeamsAsync();
+                vm.Invalid = model;
+                return View(nameof(Teams), vm);
+            }
+
+            if (model.Id == 0)
+            {
+                model.Status = TeamStatus.Available;
+                model.AssignedReportId = null;
+                await teams.AddAsync(model);
+            }
+            else
+            {
+                // Status changes go through SetTeamStatus; this form only edits the details.
+                var existing = await teams.GetByIdAsync(model.Id);
+                if (existing is null) return NotFound();
+                existing.Name = model.Name;
+                existing.AgencyName = model.AgencyName;
+                existing.BaseBarangay = model.BaseBarangay;
+                existing.CallSign = model.CallSign;
+                await teams.UpdateAsync(existing);
+            }
+
+            TempData["SavedTeam"] = model.Name;
+            return RedirectToAction(nameof(Teams));
+        }
+
+        private async Task<TeamsViewModel> BuildTeamsAsync() => new()
+        {
+            Teams = await teams.GetAllAsync(),
+            AgencyNames = (await agencies.GetAllAsync()).Where(a => a.IsActive).Select(a => a.Name).ToList()
+        };
+
+        // admin.js sends X-Requested-With; plain form posts (no JS) get a normal redirect.
+        private IActionResult Done(string? returnUrl = null)
+        {
+            if (Request.Headers.ContainsKey("X-Requested-With")) return NoContent();
+            return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Dashboard));
+        }
 
         [HttpPost, ValidateAntiForgeryToken]
         public Task<IActionResult> Reopen(int id, string? returnUrl) => ChangeAsync(id, r =>
             r.Status = r.RelayedTo is not null ? ReportStatus.Relayed : r.IsVerified ? ReportStatus.Verified : ReportStatus.Active,
             returnUrl);
 
-        private async Task<IActionResult> ChangeAsync(int id, Action<DisasterReport> change, string? returnUrl = null)
+        private async Task<IActionResult> ChangeAsync(int id, Action<DisasterReport> change, string? returnUrl = null,
+            Func<int, Task>? after = null)
         {
             var report = await reports.GetByIdAsync(id);
             if (report is null) return NotFound();
 
             change(report);
             await reports.UpdateAsync(report);
+            if (after is not null) await after(report.Id);
 
-            // admin.js sends this header; plain form posts (no JS) get a normal redirect.
-            if (Request.Headers.ContainsKey("X-Requested-With")) return NoContent();
-
-            return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction(nameof(Dashboard));
+            return Done(returnUrl);
         }
 
         // ---------- History ----------
